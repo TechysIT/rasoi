@@ -1,0 +1,188 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Default (default orange Theme) */
+:root {
+  --customPrimary-50: #fef1e9;
+  --customPrimary-100: #fcd4ba;
+  --customPrimary-200: #fbc098;
+  --customPrimary-300: #f9a36a;
+  --customPrimary-400: #f8914d;
+  --customPrimary-500: #f67520;
+  --customPrimary-600: #e06a1d;
+  --customPrimary-700: #af5317;
+  --customPrimary-800: #874012;
+  --customPrimary-900: #67310d;
+}
+
+/* Golden Theme */
+.golden-theme {
+  --customPrimary-50: #fbf7ea;
+  --customPrimary-100: #f2e5bd;
+  --customPrimary-200: #ecd89d;
+  --customPrimary-300: #e3c670;
+  --customPrimary-400: #ddbb55;
+  --customPrimary-500: #d5aa2a;
+  --customPrimary-600: #c29b26;
+  --customPrimary-700: #97791e;
+  --customPrimary-800: #755e17;
+  --customPrimary-900: #594712;
+}
+
+/* Purple Theme */
+.purple-theme {
+  --customPrimary-50: #f1edfc;
+  --customPrimary-100: #d4c8f4;
+  --customPrimary-200: #bfaeef;
+  --customPrimary-300: #a189e8;
+  --customPrimary-400: #8f72e3;
+  --customPrimary-500: #734fdc;
+  --customPrimary-600: #6948c8;
+  --customPrimary-700: #52389c;
+  --customPrimary-800: #3f2b79;
+  --customPrimary-900: #30215c;
+}
+
+/* Blue Theme */
+.blue-theme {
+  --customPrimary-50: #e6eefa;
+  --customPrimary-100: #b0c9ef;
+  --customPrimary-200: #8aafe8;
+  --customPrimary-300: #548bdd;
+  --customPrimary-400: #3375d6;
+  --customPrimary-500: #0052cc;
+  --customPrimary-600: #004bba;
+  --customPrimary-700: #003a91;
+  --customPrimary-800: #002d70;
+  --customPrimary-900: #002256;
+}
+
+/* Green Theme */
+.green-theme {
+  --customPrimary-50: #e8f4f1;
+  --customPrimary-100: #b8ded5;
+  --customPrimary-200: #96cdc0;
+  --customPrimary-300: #66b7a4;
+  --customPrimary-400: #49a992;
+  --customPrimary-500: #1b9377;
+  --customPrimary-600: #19866c;
+  --customPrimary-700: #136854;
+  --customPrimary-800: #0f5141;
+  --customPrimary-900: #0b3e32;
+}
+
+/* Black Theme */
+.black-theme {
+  --customPrimary-50: #e9e9e9;
+  --customPrimary-100: #bababa;
+  --customPrimary-200: #999999;
+  --customPrimary-300: #6b6b6b;
+  --customPrimary-400: #4e4e4e;
+  --customPrimary-500: #222222;
+  --customPrimary-600: #1f1f1f;
+  --customPrimary-700: #181818;
+  --customPrimary-800: #131313;
+  --customPrimary-900: #0e0e0e;
+}
+
+/* Red Theme */
+.red-theme {
+  --customPrimary-50: #f7e6ed;
+  --customPrimary-100: #e7b1c8;
+  --customPrimary-200: #db8bae;
+  --customPrimary-300: #ca5688;
+  --customPrimary-400: #c03571;
+  --customPrimary-500: #b0034e;
+  --customPrimary-600: #a00347;
+  --customPrimary-700: #7d0237;
+  --customPrimary-800: #61022b;
+  --customPrimary-900: #4a0121;
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer base {
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px; /* Thin scrollbar */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #4f46e5; /* Custom primary color */
+  border-radius: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}

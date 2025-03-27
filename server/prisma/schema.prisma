@@ -1,0 +1,276 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum OrderType {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+}
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+model Organization {
+  id                String    @id @default(uuid())
+  name              String
+  email             String    @unique
+  password          String
+  subscriptionStart DateTime
+  subscriptionEnd   DateTime
+  stores            Store[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  @@index([email])
+  @@index([id])
+}
+
+model Store {
+  id             String    @id @default(uuid())
+  name           String
+  logo           String?
+  taxRate        Int?
+  organizationId String?
+  orders         Order[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  SocialLink SocialLink[]
+
+  DeviceSetting DeviceSetting[]
+
+  Voucher Voucher[]
+
+  Employee Employee[]
+
+  Customer Customer[]
+
+  Dish Dish[]
+
+  Inventory Inventory[]
+
+  Category Category[]
+
+  Report       Report[]
+  Role         Role[]
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  Addon Addon[]
+
+
+}
+
+model DeviceSetting {
+  id              String    @id @default(uuid())
+  store           Store     @relation(fields: [storeId], references: [id])
+  storeId         String
+  theme           String?
+  printer         String?
+  paperSize       String?
+  updateAvailable Boolean?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+}
+
+model SocialLink {
+  id        String    @id @default(uuid())
+  store     Store     @relation(fields: [storeId], references: [id])
+  storeId   String
+  platform  String
+  url       String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Voucher {
+  id        String    @id @default(uuid())
+  store     Store     @relation(fields: [storeId], references: [id])
+  storeId   String
+  code      String    @unique
+  discount  Float
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Role {
+  id   String @id @default(uuid())
+  name String @unique()
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime?
+  storeId   String
+  store     Store      @relation(fields: [storeId], references: [id])
+  employees Employee[]
+
+  userManagement      Boolean @default(false)
+  orderManagement     Boolean @default(false)
+  inventoryManagement Boolean @default(false)
+  reportManagement    Boolean @default(false)
+  menuManagement      Boolean @default(false)
+  settingManagement   Boolean @default(false)
+  roleManagement      Boolean @default(false)
+  kithiManagement     Boolean @default(false)
+  cashManagement      Boolean @default(false)
+
+  customerManagement Boolean @default(false)
+  supplierManagement Boolean @default(false)
+}
+
+model Employee {
+  id         String    @id @default(uuid())
+  storeId    String
+  roleId     String
+  firstName  String
+  lastName   String
+  phone      String
+  address    String
+  email      String    @unique
+  avatarPath String?
+  password   String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+  lastLogin  DateTime?
+
+  store Store @relation(fields: [storeId], references: [id])
+  role  Role  @relation(fields: [roleId], references: [id])
+
+  Inventory Inventory[]
+
+  Dish Dish[]
+}
+
+model Customer {
+  id        String    @id @default(uuid())
+  store     Store     @relation(fields: [storeId], references: [id])
+  storeId   String
+  name      String
+  email     String?
+  phone     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  Order Order[]
+}
+
+model Order {
+  id         String    @id @default(uuid())
+  store      Store     @relation(fields: [storeId], references: [id])
+  storeId    String
+  customer   Customer  @relation(fields: [customerId], references: [id])
+  customerId String
+  status     String
+  totalPrice Float
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  OrderLog OrderLog[]
+}
+
+model OrderLog {
+  id        String    @id @default(uuid())
+  order     Order     @relation(fields: [orderId], references: [id])
+  orderId   String
+  status    String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Dish {
+  id         String    @id @default(uuid())
+  pictures   String
+  name       String
+  category   Category  @relation(fields: [categoryId], references: [id])
+  categoryId String
+  addedOn    DateTime  @default(now())
+  showOnMenu Boolean
+  cost       Float
+  createdBy  Employee  @relation(fields: [createdById], references: [id])
+  createdById String
+  usedItems Inventory[] @relation("DishUsedItems")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+  Addon Addon[]
+  storeId String
+  store   Store @relation(fields: [storeId], references: [id])
+}
+
+model Inventory {
+  id        String    @id @default(uuid())
+  store     Store     @relation(fields: [storeId], references: [id])
+  storeId   String
+  name      String
+  quantity  Int
+  threshold Int?
+  supplier  String?
+  createdBy Employee  @relation(fields: [createdById], references: [id])
+  createdById String
+  usedInDishes Dish[] @relation("DishUsedItems")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+}
+
+
+model Addon {
+  id        String   @id @default(uuid())
+  dish      Dish     @relation(fields: [dishId], references: [id])
+  dishId    String
+  store     Store    @relation(fields: [storeId], references: [id])
+  storeId   String
+  name      String
+  price     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  store     Store     @relation(fields: [storeId], references: [id])
+  storeId   String
+  name      String
+  status    Boolean   @default(true) 
+  categoryIndex       Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  Dish Dish[]
+  @@unique([categoryIndex])
+}
+
+model Report {
+  id         String    @id @default(uuid())
+  store      Store     @relation(fields: [storeId], references: [id])
+  storeId    String
+  reportType String
+  data       Json
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+}

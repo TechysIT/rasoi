@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "DeviceSetting" ALTER COLUMN "theme" DROP NOT NULL,
+ALTER COLUMN "printer" DROP NOT NULL,
+ALTER COLUMN "paperSize" DROP NOT NULL;
