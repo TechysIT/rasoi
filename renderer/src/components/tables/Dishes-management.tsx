@@ -70,10 +70,6 @@ import {
 } from "../ui/select";
 
 export const columns: ColumnDef<DishesManagementData>[] = [
-
-
-
-  
   {
     id: "select",
     header: ({ table }) => (

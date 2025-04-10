@@ -47,7 +47,6 @@ const addCategory = asyncHandler(async (req, res) => {
         storeId,
         name,
         status,
-        categoryIndex,
       },
     });
 

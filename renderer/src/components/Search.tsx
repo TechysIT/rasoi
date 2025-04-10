@@ -7,7 +7,6 @@ import { Search } from "lucide-react";
 import { productData } from "@/lib/data";
 import Image from "next/image";
 import { Separator } from "./ui/separator";
-import { Button } from "./ui/button";
 
 export default function SearchProduct() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,7 +51,7 @@ export default function SearchProduct() {
           }}
         />
       </div>
- 
+
       {isOpen && (
         <div className="absolute  w-full bg-white border border-gray-300 rounded-md shadow-md mt-5 z-50">
           <ScrollArea className="max-h-[400px]">

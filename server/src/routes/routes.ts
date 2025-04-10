@@ -6,7 +6,7 @@ import {
   registerEmployees,
 } from "../controllers/employee.controller";
 import { getStores, registerStore } from "../controllers/store.controller";
-import { addCustomer } from "../controllers/customer.controller";
+import { getCustomers } from "../controllers/customer.controller";
 import {
   addInventory,
   getInventory,
@@ -14,6 +14,7 @@ import {
 import { addCategory, getCategories } from "../controllers/category.controller";
 import { getAddons, getDishes } from "../controllers/dish.controller";
 import { createRole, getRoles } from "../controllers/role.controller";
+import { getTableList } from "../controllers/table.controller";
 
 const router = Router();
 
@@ -51,5 +52,8 @@ router.route("/dish/get/:storeId").get(getDishes);
 // role
 // router.route("/role/create").post(createRole);
 router.get("/roles/:storeId", getRoles);
+
+// get table
+router.get("/tablelist/get/:storeId", getTableList);
 
 export default router;

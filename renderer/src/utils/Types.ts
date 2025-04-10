@@ -102,15 +102,31 @@ export type InventoryGRNData = {
 };
 export type DishesManagementData = {
   id: string;
-  pitures: string;
+  pictures: string;
   name: string;
-  category: string;
+  categoryId: string;
   addedOn: string;
-  itemUsed: string[];
   showOnMenu: boolean;
   cost: number;
-  createdBy: string;
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  storeId: string;
+  itemUsed: {
+    id: string;
+    storeId: string;
+    name: string;
+    quantity: number;
+    threshold: number;
+    supplier: string;
+    createdById: string;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string | null;
+  }[];
 };
+
 export type AddOnsTypes = {
   id: string;
   name: string;

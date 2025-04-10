@@ -75,6 +75,8 @@ model Store {
   Addon Addon[]
 
 
+
+  TableList TableList[]
 }
 
 model DeviceSetting {
@@ -201,54 +203,71 @@ model OrderLog {
 }
 
 model Dish {
-  id         String    @id @default(uuid())
-  pictures   String
-  name       String
-  category   Category  @relation(fields: [categoryId], references: [id])
-  categoryId String
-  addedOn    DateTime  @default(now())
-  showOnMenu Boolean
-  cost       Float
-  createdBy  Employee  @relation(fields: [createdById], references: [id])
-  createdById String
-  usedItems Inventory[] @relation("DishUsedItems")
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  deletedAt  DateTime?
-  Addon Addon[]
-  storeId String
-  store   Store @relation(fields: [storeId], references: [id])
+  id           String         @id @default(uuid())
+  name         String
+  rating       Float?
+  addOns       String?
+  bowls        Int            @default(1)
+  persons      Int            @default(1)
+  price        Float
+  imageUrl     String?
+  itemDetails  String?
+  deletedAt    DateTime?
+  storeId      String?
+  employeeId   String?
+  categoryId   String?
+
+  store        Store?         @relation(fields: [storeId], references: [id])
+  employee     Employee?      @relation(fields: [employeeId], references: [id])
+  category     Category?      @relation(fields: [categoryId], references: [id])
+  inventoryItems DishInventory[]
+  Addon        Addon[]
+
+
 }
 
-model Inventory {
-  id        String    @id @default(uuid())
-  store     Store     @relation(fields: [storeId], references: [id])
-  storeId   String
-  name      String
-  quantity  Int
-  threshold Int?
-  supplier  String?
-  createdBy Employee  @relation(fields: [createdById], references: [id])
-  createdById String
-  usedInDishes Dish[] @relation("DishUsedItems")
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  deletedAt  DateTime?
-}
+model DishInventory {
+  id               String   @id @default(uuid())
+  dishId           String
+  inventoryItemId  String
+  defaultSelected  Boolean @default(false)
 
+  dish             Dish     @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  inventoryItem    Inventory @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+}
 
 model Addon {
   id        String   @id @default(uuid())
-  dish      Dish     @relation(fields: [dishId], references: [id])
-  dishId    String
-  store     Store    @relation(fields: [storeId], references: [id])
-  storeId   String
+  dishId    String?
+  storeId   String?
   name      String
   price     Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
+
+  dish      Dish?    @relation(fields: [dishId], references: [id])
+  store     Store?   @relation(fields: [storeId], references: [id])
 }
+
+
+model Inventory {
+  id            String   @id @default(uuid())
+  storeId       String?
+  name          String
+  quantity      Int
+  threshold     Int
+  supplier      String?
+  createdBy     String?
+  createdById   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+  store         Store?   @relation(fields: [storeId], references: [id])
+  createdByUser Employee? @relation(fields: [createdById], references: [id])
+  usedInDishes  DishInventory[]
+}
+
 
 model Category {
   id        String    @id @default(uuid())
@@ -256,12 +275,10 @@ model Category {
   storeId   String
   name      String
   status    Boolean   @default(true) 
-  categoryIndex       Int
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
   Dish Dish[]
-  @@unique([categoryIndex])
 }
 
 model Report {
@@ -274,3 +291,16 @@ model Report {
   updatedAt  DateTime  @updatedAt
   deletedAt  DateTime?
 }
+
+
+model TableList {
+  id        Int      @id @default(autoincrement()) 
+  name      String
+  chairs    Int
+  status    String  
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+

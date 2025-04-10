@@ -139,24 +139,33 @@ const schema = `
     FOREIGN KEY (orderId) REFERENCES orders(id)
   );
 
-  CREATE TABLE IF NOT EXISTS dishes (
-    id TEXT PRIMARY KEY,
-    storeId TEXT NOT NULL,
-    name TEXT,
-    pictures TEXT,
-    price REAL,
+  CREATE TABLE IF NOT EXISTS Dish (
+    id TEXT PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL,
+    rating REAL,
+    addOns TEXT, 
+    bowls INTEGER DEFAULT 1,
+    persons INTEGER DEFAULT 1,
+    price REAL NOT NULL,
+    imageUrl TEXT,
+    itemDetails TEXT,
+    deletedAt DATETIME,
+    storeId TEXT,
+    employeeId TEXT,
     categoryId TEXT,
-    addedOn TEXT, 
-    showOnMenu INTEGER, -- 1 for true, 0 for false
-    cost REAL,
-    createdById TEXT,
-    createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
-    updatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
-    deletedAt TEXT,
-    FOREIGN KEY (storeId) REFERENCES stores(id) ON DELETE CASCADE,
-    FOREIGN KEY (categoryId) REFERENCES categories(id),
-    FOREIGN KEY (createdById) REFERENCES employees(id)
-);
+    FOREIGN KEY (storeId) REFERENCES stores(id) ON DELETE SET NULL,
+    FOREIGN KEY (employeeId) REFERENCES employees(id) ON DELETE SET NULL,
+    FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL
+ );
+
+  CREATE TABLE IF NOT EXISTS DishInventory (
+    id TEXT PRIMARY KEY NOT NULL,
+    dishId TEXT NOT NULL,
+    inventoryItemId TEXT NOT NULL,
+    defaultSelected BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (dishId) REFERENCES Dish(id) ON DELETE CASCADE,
+    FOREIGN KEY (inventoryItemId) REFERENCES inventory(id) ON DELETE CASCADE
+  );
 
   CREATE TABLE IF NOT EXISTS addons (
     id TEXT PRIMARY KEY,
@@ -167,7 +176,7 @@ const schema = `
     createdAt TEXT,
     updatedAt TEXT,
     deletedAt TEXT,
-    FOREIGN KEY (dishId) REFERENCES dishes(id),
+    FOREIGN KEY (dishId) REFERENCES Dish(id),
     FOREIGN KEY (storeId) REFERENCES stores(id) ON DELETE CASCADE
   );
 
@@ -192,7 +201,6 @@ const schema = `
     storeId TEXT,
     name TEXT,
     status INTEGER,
-    categoryIndex INTEGER UNIQUE,
     createdAt TEXT,
     updatedAt TEXT,
     deletedAt TEXT,
@@ -209,6 +217,24 @@ const schema = `
     deletedAt TEXT,
     FOREIGN KEY (storeId) REFERENCES stores(id)
   );
+
+  CREATE TABLE IF NOT EXISTS table_list (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    chairs INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    reservationName TEXT,
+    reservationPhone TEXT,
+    reservationEmail TEXT,
+    reservationDescription TEXT,
+    reservationTime TEXT,
+    mergedFrom TEXT,
+    merged BOOLEAN DEFAULT 0,
+    deletedAt TEXT,
+    storeId TEXT,
+    FOREIGN KEY (storeId) REFERENCES stores(id)
+  );
+
 `;
 
 db.exec(schema);

@@ -274,10 +274,9 @@ export default function ipcHandler() {
     console.log("Received request to get categories for storeId:", storeId);
 
     try {
+      // Fetch from local DB
       const categories = db
-        .prepare(
-          "SELECT * FROM categories WHERE storeId = ? ORDER BY categoryIndex ASC"
-        )
+        .prepare("SELECT * FROM categories WHERE storeId = ?")
         .all(storeId);
 
       if (categories.length > 0) {
@@ -287,6 +286,7 @@ export default function ipcHandler() {
 
       console.log("No local categories found, fetching from API...");
 
+      // Fetch from API
       const apiResponse = await axios.get(
         `http://localhost:8000/api/v1/category/get/${storeId}`,
         {
@@ -297,17 +297,17 @@ export default function ipcHandler() {
       );
 
       const apiCategories = apiResponse.data.data;
-
-      console.log("api", apiCategories);
+      console.log("API categories:", apiCategories);
 
       if (!Array.isArray(apiCategories)) {
-        console.error("Invalid API response:", apiCategories);
+        console.error("Invalid API response format:", apiCategories);
         return [];
       }
 
+      // Insert into local DB
       const insertStmt = db.prepare(`
-        INSERT INTO categories (id, name, storeId, status, categoryIndex, createdAt, updatedAt, deletedAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO categories (id, name, storeId, status, createdAt, updatedAt, deletedAt)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
 
       const insertMany = db.transaction((categories) => {
@@ -317,7 +317,6 @@ export default function ipcHandler() {
             category.name,
             category.storeId,
             category.status ? 1 : 0,
-            category.categoryIndex,
             category.createdAt,
             category.updatedAt,
             category.deletedAt || null
@@ -327,7 +326,7 @@ export default function ipcHandler() {
 
       insertMany(apiCategories);
 
-      console.log("Fetched categories saved to local database.");
+      console.log("Categories synced to local DB.");
       return apiCategories;
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -340,16 +339,16 @@ export default function ipcHandler() {
     console.log("Received request to get inventory for storeId:", storeId);
 
     try {
-      // Fetch inventory from local SQLite database, including employee's full name
+      // Try local fetch first
       const inventory = db
         .prepare(
           `
           SELECT i.id, i.storeId, i.name, i.quantity, i.threshold, i.supplier,
-                 i.createdBy AS createdById, 
-                 (e.firstName || ' ' || e.lastName) AS createdBy,  
+                 i.createdById,
+                 (e.firstName || ' ' || e.lastName) AS createdBy,
                  i.createdAt, i.updatedAt, i.deletedAt
           FROM inventory i
-          LEFT JOIN employees e ON i.createdBy = e.id
+          LEFT JOIN employees e ON i.createdById = e.id
           WHERE i.storeId = ?
         `
         )
@@ -362,7 +361,7 @@ export default function ipcHandler() {
 
       console.log("No local inventory found, fetching from API...");
 
-      // Fetch from API if not found locally
+      // Fetch from API
       const apiResponse = await axios.get(
         `http://localhost:8000/api/v1/inventory/get/${storeId}`,
         {
@@ -373,17 +372,19 @@ export default function ipcHandler() {
       );
 
       const apiInventory = apiResponse.data.data;
-
-      console.log("API Response:", apiInventory);
+      console.log("API Inventory Response:", apiInventory);
 
       if (!Array.isArray(apiInventory)) {
         console.error("Invalid API response:", apiInventory);
         return [];
       }
 
-      // Prepare SQL insert statement
+      // Prepare to insert into SQLite
       const insertStmt = db.prepare(`
-        INSERT INTO inventory (id, storeId, name, quantity, threshold, supplier, createdBy, createdAt, updatedAt, deletedAt)
+        INSERT INTO inventory (
+          id, storeId, name, quantity, threshold, supplier,
+          createdById, createdAt, updatedAt, deletedAt
+        )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
@@ -396,7 +397,7 @@ export default function ipcHandler() {
             item.quantity,
             item.threshold || null,
             item.supplier || null,
-            item.createdById,
+            item.createdById || null,
             item.createdAt,
             item.updatedAt,
             item.deletedAt || null
@@ -405,19 +406,18 @@ export default function ipcHandler() {
       });
 
       insertMany(apiInventory);
+      console.log("Inventory synced to local database.");
 
-      console.log("Fetched inventory saved to local database.");
-
-      // After saving, retrieve again from local DB with employee names
+      // Refetch with employee names
       const updatedInventory = db
         .prepare(
           `
           SELECT i.id, i.storeId, i.name, i.quantity, i.threshold, i.supplier,
-                 i.createdBy AS createdById, 
-                 (e.firstname || ' ' || e.lastname) AS createdBy,  -- Concatenating first and last name
+                 i.createdById,
+                 (e.firstName || ' ' || e.lastName) AS createdBy,
                  i.createdAt, i.updatedAt, i.deletedAt
           FROM inventory i
-          LEFT JOIN employees e ON i.createdBy = e.id
+          LEFT JOIN employees e ON i.createdById = e.id
           WHERE i.storeId = ?
         `
         )
@@ -433,99 +433,107 @@ export default function ipcHandler() {
   // fetch dishes
   ipcMain.handle("getDishes", async (_event, storeId) => {
     console.log("Received request to get dishes for storeId:", storeId);
-  
     try {
-      // Fetch dishes from local SQLite database, including employee's full name
-      const dishes = db
+      // Fetch local dishes from the database
+      const localDishes = db
         .prepare(
-          `
-          SELECT d.id, d.storeId, d.name, d.pictures, d.price, d.categoryId,
-                 d.addedOn, d.showOnMenu, d.cost, d.createdById, 
-                 (e.firstName || ' ' || e.lastName) AS createdBy, 
-                 d.createdAt, d.updatedAt, d.deletedAt
-          FROM dishes d
-          LEFT JOIN employees e ON d.createdById = e.id
-          WHERE d.storeId = ?
-        `
+          `SELECT d.*, 
+                  e.firstName, e.lastName, 
+                  c.name AS categoryName 
+           FROM Dish d
+           LEFT JOIN employees e ON d.employeeId = e.id
+           LEFT JOIN categories c ON d.categoryId = c.id
+           WHERE d.storeId = ?`
         )
         .all(storeId);
-  
-      if (dishes.length > 0) {
-        console.log("Returning local dishes:", dishes);
-        return dishes;
+
+      if (localDishes.length > 0) {
+        console.log("Returning local dishes:", localDishes.length);
+
+        // Return dishes with enriched fields (categoryName and createdBy)
+        return localDishes.map((dish: any) => ({
+          ...dish,
+          createdBy:
+            dish.firstName && dish.lastName
+              ? `${dish.firstName} ${dish.lastName}`
+              : null,
+          categoryName: dish.categoryName || null,
+        }));
       }
-  
-      console.log("No local dishes found, fetching from API...");
-  
-      // Fetch from API if not found locally
-      const apiResponse = await axios.get(
-        `http://localhost:8000/api/v1/dishes/get/${storeId}`,
+
+      console.log("No local dishes found. Fetching from API...");
+
+      // Fetch dishes from API if not found locally
+      const response = await axios.get(
+        `http://localhost:8000/api/v1/dish/get/${storeId}`,
         {
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         }
       );
-  
-      const apiDishes = apiResponse.data.data;
-  
-      console.log("API Response:", apiDishes);
-  
-      if (!Array.isArray(apiDishes)) {
-        console.error("Invalid API response:", apiDishes);
-        return [];
-      }
-  
-      // Prepare SQL insert statement
-      const insertStmt = db.prepare(`
-        INSERT INTO dishes (id, storeId, name, pictures, price, categoryId, addedOn, showOnMenu, cost, createdById, createdAt, updatedAt, deletedAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+
+      const apiDishes = response.data.data || [];
+
+      const insertDish = db.prepare(`
+        INSERT INTO Dish (
+          id, name, rating, addOns, bowls, persons, price, imageUrl, itemDetails,
+          deletedAt, storeId, employeeId, categoryId
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
-  
-      const insertMany = db.transaction((items) => {
-        for (const item of items) {
-          insertStmt.run(
-            item.id,
-            item.storeId,
-            item.name,
-            item.pictures || null,
-            item.price,
-            item.categoryId,
-            item.addedOn,
-            item.showOnMenu,
-            item.cost,
-            item.createdById,
-            item.createdAt,
-            item.updatedAt,
-            item.deletedAt || null
-          );
+
+      const insertMany = db.transaction((dishes: any[]) => {
+        for (const dish of dishes) {
+          try {
+            insertDish.run(
+              dish.id,
+              dish.name,
+              dish.rating || null,
+              JSON.stringify(dish.addOns || []),
+              dish.bowls || 1,
+              dish.persons || 1,
+              dish.price,
+              dish.imageUrl || null,
+              dish.itemDetails || null,
+              dish.deletedAt || null,
+              dish.storeId,
+              dish.employeeId || null,
+              dish.categoryId || null
+            );
+          } catch (err: any) {
+            console.error(`Failed to insert dish '${dish.name}':`, err.message);
+          }
         }
       });
-  
+
       insertMany(apiDishes);
-  
-      console.log("Fetched dishes saved to local database.");
-  
-      // After saving, retrieve again from local DB with employee names
+      console.log(`Inserted ${apiDishes.length} dishes.`);
+
+      // Re-fetch and enrich the dishes after insertion
       const updatedDishes = db
         .prepare(
-          `
-          SELECT d.id, d.storeId, d.name, d.pictures, d.price, d.categoryId,
-                 d.addedOn, d.showOnMenu, d.cost, d.createdById, 
-                 (e.firstName || ' ' || e.lastName) AS createdBy, 
-                 d.createdAt, d.updatedAt, d.deletedAt
-          FROM dishes d
-          LEFT JOIN employees e ON d.createdById = e.id
-          WHERE d.storeId = ?
-        `
+          `SELECT d.*, 
+                  e.firstName, e.lastName, 
+                  c.name AS categoryName 
+           FROM Dish d
+           LEFT JOIN employees e ON d.employeeId = e.id
+           LEFT JOIN categories c ON d.categoryId = c.id
+           WHERE d.storeId = ?`
         )
         .all(storeId);
-  
-      return updatedDishes;
-    } catch (error) {
-      console.error("Error fetching dishes:", error);
+
+      const enrichedDishes = updatedDishes.map((dish: any) => ({
+        ...dish,
+        createdBy:
+          dish.firstName && dish.lastName
+            ? `${dish.firstName} ${dish.lastName}`
+            : null,
+        categoryName: dish.categoryName || null,
+      }));
+
+      console.log("Returning updated dishes:", enrichedDishes.length);
+      return enrichedDishes;
+    } catch (error: any) {
+      console.error("Error in getDishes:", error.message);
       return [];
     }
   });
-  
 }

@@ -2,7 +2,6 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
 import { prisma } from "../db/db";
 import { ApiResponse } from "../utils/ApiResponse";
-import { AddonRegister, DishRegister } from "../utils/types";
 
 // const addDish = asyncHandler(async (req, res) => {
 //   try {
@@ -116,7 +115,9 @@ const getDishes = asyncHandler(async (req, res) => {
       throw new ApiError(404, "Store not found");
     }
     // Fetch all dishes by Store ID
-    const dishes = await prisma.dish.findMany({ where: { storeId } });
+    const dishes = await prisma.dish.findMany({
+      where: { storeId },
+    });
     res
       .status(200)
       .json(new ApiResponse(200, dishes, "Dishes retrieved successfully"));
