@@ -231,7 +231,7 @@ model DishInventory {
   dishId           String
   inventoryItemId  String
   defaultSelected  Boolean @default(false)
-
+  quantity         Int     @default(1)
   dish             Dish     @relation(fields: [dishId], references: [id], onDelete: Cascade)
   inventoryItem    Inventory @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
 }
@@ -245,6 +245,7 @@ model Addon {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
+  
 
   dish      Dish?    @relation(fields: [dishId], references: [id])
   store     Store?   @relation(fields: [storeId], references: [id])

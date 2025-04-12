@@ -126,8 +126,33 @@ const getDishes = asyncHandler(async (req, res) => {
   }
 });
 
-// Fetch all Addons by Store ID
+// Fetch all Addons by dish ID
 const getAddons = asyncHandler(async (req, res) => {
+  try {
+    const dishId = req.params.dishId;
+    if (!dishId) {
+      throw new ApiError(400, "Dish ID must be provided");
+    }
+    // Validate dish existence
+    const dish = await prisma.dish.findUnique({
+      where: { id: dishId },
+    });
+
+    if (!dish) {
+      throw new ApiError(404, "Dish not found");
+    }
+    // Fetch all addons by dish ID
+    const addons = await prisma.addon.findMany({ where: { dishId } });
+    res
+      .status(200)
+      .json(new ApiResponse(200, addons, "Addons retrieved successfully"));
+  } catch (error: any) {
+    throw new ApiError(500, "Internal Server Error", error);
+  }
+});
+
+// get adons by storeId
+const getAddonsByStoreId = asyncHandler(async (req, res) => {
   try {
     const storeId = req.params.storeId;
     if (!storeId) {
@@ -137,10 +162,11 @@ const getAddons = asyncHandler(async (req, res) => {
     const store = await prisma.store.findUnique({
       where: { id: storeId },
     });
+
     if (!store) {
       throw new ApiError(404, "Store not found");
     }
-    // Fetch all addons by Store ID
+    // Fetch all addons by store ID
     const addons = await prisma.addon.findMany({ where: { storeId } });
     res
       .status(200)
@@ -150,4 +176,32 @@ const getAddons = asyncHandler(async (req, res) => {
   }
 });
 
-export { getDishes, getAddons };
+// get dish invetory
+
+const getDishInventory = asyncHandler(async (req, res) => {
+  try {
+    const dishId = req.params.dishId;
+
+    if (!dishId) {
+      throw new ApiError(400, "Dish ID must be provided");
+    }
+    // Validate dish existence
+    const dish = await prisma.dish.findUnique({
+      where: { id: dishId },
+    });
+    if (!dish) {
+      throw new ApiError(404, "Dish not found");
+    }
+    // Fetch all dishes by Dish ID
+    const dishes = await prisma.dishInventory.findMany({
+      where: { dishId },
+    });
+    res
+      .status(200)
+      .json(new ApiResponse(200, dishes, "Dishes retrieved successfully"));
+  } catch (error: any) {
+    throw new ApiError(500, "Internal Server Error", error);
+  }
+});
+
+export { getDishes, getAddons, getDishInventory, getAddonsByStoreId };

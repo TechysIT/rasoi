@@ -11,26 +11,66 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { ProductCard } from "../components/Product-card";
 import { ScrollArea } from "../components/ui/scroll-area";
-import { categories, productData } from "@/lib/data";
+// import { productData } from "@/lib/data";
 import MenuItem from "../components/Menu-card";
-import { Select, SelectItem } from "@heroui/select";
 import { Separator } from "../components/ui/separator";
 import OrderSummary from "../components/Order-summery";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function Home() {
   const tabsListRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState("all");
+  const [productData, setProductData] = useState<any[]>([]);
+
+  const storeId = "ef298430-00aa-4a11-96a0-d313378ce8f0";
+
+  useEffect(() => {
+    const fetchCategory = async () => {
+      try {
+        const result = await window.ipc.invoke("getCategories", storeId);
+        // if (!result) {
+        //   throw new Error("No data received from IPC");
+        // }
+        console.log("Fetched dishes from IPC:", result);
+        setCategories(result);
+      } catch (error) {
+        console.error("Error fetching dishes from ipc:", error);
+      }
+    };
+    const fetchDishes = async () => {
+      try {
+        const result = await window.ipc.invoke("getDishes", storeId);
+        // if (!result) {
+        //   throw new Error("No data received from IPC");
+        // }
+        console.log("Fetched dishes from IPC:", result);
+        setProductData(result);
+      } catch (error) {
+        console.error("Error fetching dishes from ipc:", error);
+      }
+    };
+    fetchDishes();
+    fetchCategory();
+  }, [storeId]);
 
   const handleAddToMenu = ({
     id,
-    selectedFillings,
+    selectedAddons,
     quantity,
     note,
   }: {
     id: string;
-    selectedFillings: string[];
+    selectedAddons: string[];
     quantity: number;
     note: string;
   }) => {
@@ -42,11 +82,13 @@ export default function Home() {
 
     const newProduct = {
       ...product,
-      selectedFillings,
+      selectedAddons,
       quantity,
       note,
+      addOns: product.addOns || [],
     };
 
+    console.log("New product to add:", newProduct);
     setMenuItems((prev) => {
       if (!Array.isArray(prev)) {
         console.error("menuItems is not an array", prev);
@@ -56,8 +98,8 @@ export default function Home() {
       const existingIndex = prev.findIndex(
         (item) =>
           item.id === newProduct.id &&
-          JSON.stringify(item.selectedFillings) ===
-            JSON.stringify(newProduct.selectedFillings)
+          JSON.stringify(item.selectedAddons) ===
+            JSON.stringify(newProduct.selectedAddons)
       );
 
       if (existingIndex !== -1) {
@@ -134,65 +176,91 @@ export default function Home() {
         <ResizablePanelGroup direction="vertical">
           <ResizablePanel defaultSize={80}>
             <div className="w-full ">
-              {/* Tabs with Conditional Arrow Navigation */}
-              <Tabs defaultValue="all" className="w-full ">
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="w-full"
+              >
                 <div className="relative flex items-center py-2">
                   {/* Left Arrow (Only visible if scrollable) */}
                   {canScrollLeft && (
                     <button
                       onClick={scrollLeft}
-                      className="absolute left-0 z-10  text-customPrimary-400   focus:outline-none"
+                      className="absolute left-0 z-10 text-customPrimary-400 focus:outline-none"
                     >
                       <ChevronLeftIcon />
                     </button>
                   )}
 
-                  {/* Tabs List (Hiding the scrollbar) */}
+                  {/* Tabs List */}
                   <div
                     ref={tabsListRef}
                     className="flex overflow-x-hidden whitespace-nowrap mx-8"
                   >
                     <TabsList className="flex gap-2 bg-transparent">
+                      {/* "All" tab */}
+                      <TabsTrigger
+                        value="all"
+                        className="rounded-2xl whitespace-nowrap data-[state=active]:bg-customPrimary-500 data-[state=active]:text-white capitalize"
+                      >
+                        All
+                      </TabsTrigger>
+
+                      {/* Category tabs */}
                       {categories.map((category) => (
                         <TabsTrigger
-                          key={category.value}
-                          value={category.value}
-                          className="rounded-2xl whitespace-nowrap data-[state=active]:bg-customPrimary-500 data-[state=active]:text-white"
+                          key={category.id}
+                          value={category.id}
+                          className="rounded-2xl whitespace-nowrap data-[state=active]:bg-customPrimary-500 data-[state=active]:text-white capitalize"
                         >
-                          {category.label}
+                          {category.name}
                         </TabsTrigger>
                       ))}
                     </TabsList>
                   </div>
 
-                  {/* Right Arrow (Only visible if scrollable) */}
+                  {/* Right Arrow */}
                   {canScrollRight && (
                     <button
                       onClick={scrollRight}
-                      className="absolute right-0 z-10  text-customPrimary-400
-             focus:outline-none"
+                      className="absolute right-0 z-10 text-customPrimary-400 focus:outline-none"
                     >
                       <ChevronRightIcon />
                     </button>
                   )}
                 </div>
 
-                {/* Tabs Content */}
-                {categories.map((category) => (
-                  <TabsContent key={category.value} value={category.value}>
-                    <h3 className="text-lg font-semibold container">
-                      {category.label} Dishes
-                    </h3>
+                {/* Tabs Content for All Tab */}
+                <TabsContent value="all">
+                  <ScrollArea className="h-[90vh] pt-5 pb-16 mb-20 scrollbar-hide px-2 2xl:px-4">
+                    <div className="grid grid-cols-4 2xl:grid-cols-5 gap-2 2xl:gap-6 pb-16">
+                      {productData.map((product) => (
+                        <ProductCard
+                          key={product.id}
+                          {...product}
+                          onAddToMenu={handleAddToMenu}
+                        />
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </TabsContent>
 
-                    <ScrollArea className="h-[90vh] pt-5 pb-16 mb-20 scrollbar-hide  px-2 2xl:px-4">
-                      <div className="grid grid-cols-4 2xl:grid-cols-5 gap-2 2xl:gap-6 pb-16 ">
-                        {productData.map((product) => (
-                          <ProductCard
-                            key={product.title}
-                            {...product}
-                            onAddToMenu={handleAddToMenu}
-                          />
-                        ))}
+                {/* Tabs Content for Each Category */}
+                {categories.map((category) => (
+                  <TabsContent key={category.id} value={category.id}>
+                    <ScrollArea className="h-[90vh] pt-5 pb-16 mb-20 scrollbar-hide px-2 2xl:px-4">
+                      <div className="grid grid-cols-4 2xl:grid-cols-5 gap-2 2xl:gap-6 pb-16">
+                        {productData
+                          .filter(
+                            (product) => product.categoryId === category.id
+                          )
+                          .map((product) => (
+                            <ProductCard
+                              key={product.id}
+                              {...product}
+                              onAddToMenu={handleAddToMenu}
+                            />
+                          ))}
                       </div>
                     </ScrollArea>
                   </TabsContent>
@@ -215,28 +283,30 @@ export default function Home() {
                   Order no: <span>ABC123abc</span>
                 </p>
               </div>
-              <Select
-                defaultSelectedKeys={["dine-in"]}
-                radius="sm"
-                classNames={{
-                  base: "w-28 text-customPrimary-500",
-                  trigger:
-                    "group-data-[has-value=true]:border-customPrimary-500 border-customPrimary-500",
-                  value: "group-data-[has-value=true]:text-customPrimary-500",
-                  listbox:
-                    "data-[hover=true]:bg-customPrimary-50 data-[selectable=true]:bg-customPrimary-50",
-                }}
-                variant="bordered"
-              >
-                <SelectItem key="dine-in" value="Dine in">
-                  Dine in
-                </SelectItem>
-                <SelectItem key="takeaway" value="Takeaway">
-                  Takeaway
-                </SelectItem>
-                <SelectItem key="delivery" value="Delivery">
-                  Delivery
-                </SelectItem>
+              <Select defaultValue="dine-in">
+                <SelectTrigger className="w-24 max-h-8 border-customPrimary-500 text-customPrimary-500 focus:ring-0 focus:border-customPrimary-500">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem
+                    value="dine-in"
+                    className="data-[state=checked]:bg-customPrimary-50 data-[highlighted]:bg-customPrimary-50 text-customPrimary-500"
+                  >
+                    Dine in
+                  </SelectItem>
+                  <SelectItem
+                    value="takeaway"
+                    className="data-[state=checked]:bg-customPrimary-50 data-[highlighted]:bg-customPrimary-50 text-customPrimary-500"
+                  >
+                    Takeaway
+                  </SelectItem>
+                  <SelectItem
+                    value="delivery"
+                    className="data-[state=checked]:bg-customPrimary-50 data-[highlighted]:bg-customPrimary-50 text-customPrimary-500"
+                  >
+                    Delivery
+                  </SelectItem>
+                </SelectContent>
               </Select>
             </div>
             <Separator className="w-[92%] mx-auto" />
@@ -244,15 +314,26 @@ export default function Home() {
               {menuItems.map((item, index) => (
                 <MenuItem
                   key={index}
-                  title={item.title}
+                  title={item.name}
                   image={item.imageUrl}
                   price={item.price || 0}
                   quantity={item.quantity}
                   note={item.note}
                   onRemove={() => handleRemoveItem(item.id)}
-                  addOns={item.selectedFillings
-                    .map((index: number) => productData[0].addOns[index])
-                    .join(", ")}
+                  addons={
+                    Array.isArray(item.selectedAddons) &&
+                    Array.isArray(item.addons)
+                      ? (item.selectedAddons
+                          .map((id: string) =>
+                            item.addons.find((addon) => addon.id === id)
+                          )
+                          .filter(Boolean) as {
+                          id: string;
+                          name: string;
+                          defaultSelected?: boolean;
+                        }[])
+                      : []
+                  }
                   onQuantityChange={(quantity) => {
                     setMenuItems((prev) =>
                       prev.map((prevItem, prevIndex) =>

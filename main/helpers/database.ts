@@ -162,7 +162,8 @@ const schema = `
     id TEXT PRIMARY KEY NOT NULL,
     dishId TEXT NOT NULL,
     inventoryItemId TEXT NOT NULL,
-    defaultSelected BOOLEAN DEFAULT FALSE,
+    defaultSelected INTEGER DEFAULT 0,
+    quantity INTEGER DEFAULT 1,
     FOREIGN KEY (dishId) REFERENCES Dish(id) ON DELETE CASCADE,
     FOREIGN KEY (inventoryItemId) REFERENCES inventory(id) ON DELETE CASCADE
   );

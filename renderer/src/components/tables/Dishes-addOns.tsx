@@ -55,6 +55,7 @@ import {
 import { Label } from "../ui/label";
 import { Switch } from "@heroui/switch";
 import { cn } from "@/utils/cn";
+import { timeConverter } from "@/utils/timeConverter";
 
 export const columns: ColumnDef<AddOnsTypes>[] = [
   {
@@ -62,8 +63,11 @@ export const columns: ColumnDef<AddOnsTypes>[] = [
     header: ({ table }) => (
       <Checkbox
         checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
+          table.getIsAllPageRowsSelected()
+            ? true
+            : table.getIsSomePageRowsSelected()
+            ? "indeterminate"
+            : false
         }
         onCheckedChange={(value: boolean) =>
           table.toggleAllPageRowsSelected(!!value)
@@ -91,58 +95,24 @@ export const columns: ColumnDef<AddOnsTypes>[] = [
     ),
   },
   {
-    accessorKey: "varations",
-    header: "Variations",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("varations")}</div>
-    ),
-  },
-  {
-    accessorKey: "itemUsed",
-    header: "Item Used",
-    cell: ({ row }) => <div>{row.getValue("itemUsed")}</div>,
-  },
-  {
-    accessorKey: "mandetory",
-    header: "Mandatory",
-    cell: ({ row }) => (
-      <Switch
-        checked={row.getValue("mandetory")}
-        onChange={(value) => {
-          // Optional: add logic here to update the row data if needed
-        }}
-        classNames={{
-          base: cn(
-            "inline-flex flex-row-reverse w-full items-center justify-between cursor-pointer rounded-lg gap-2 p-4 border-transparent",
-            "bg-transparent hover:bg-none",
-            "data-[selected=true]:bg-none"
-          ),
-          wrapper: cn(
-            "p-0 h-4 overflow-visible",
-            "group-data-[selected=true]:bg-orange-500"
-          ),
-          thumb: cn(
-            "w-6 h-6 border-2 shadow-lg transition-all",
-            "group-data-[hover=true]:border-orange-500",
-            "group-data-[selected=true]:ms-6",
-            "group-data-[selected=true]:bg-white",
-            "group-data-[selected=true]:border-orange-500",
-            "group-data-[pressed=true]:w-6",
-            "group-data-[selected]:group-data-[pressed]:ms-4"
-          ),
-        }}
-      />
-    ),
-  },
-  {
     accessorKey: "price",
     header: "Price (£)",
     cell: ({ row }) => <div>£{row.getValue("price")}</div>,
   },
   {
-    accessorKey: "createdBy",
-    header: "Created By",
-    cell: ({ row }) => <div>{row.getValue("createdBy")}</div>,
+    accessorKey: "dishName",
+    header: "Dish",
+    cell: ({ row }) => <div>{row.getValue("dishName")}</div>,
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Created At",
+    cell: ({ row }) => <div>{timeConverter(row.getValue("createdAt"))}</div>,
+  },
+  {
+    accessorKey: "updatedAt",
+    header: "Updated At",
+    cell: ({ row }) => <div>{timeConverter(row.getValue("updatedAt"))}</div>,
   },
   {
     id: "actions",
@@ -377,11 +347,11 @@ const AddDishAddons = () => {
   // State for form data without the id
   const [formData, setFormData] = useState<Omit<AddOnsTypes, "id">>({
     name: "",
-    variations: "",
-    itemUsed: "",
-    mandatory: false,
     price: 0,
-    createdBy: "",
+    dishId: "",
+    storeId: "",
+    createdAt: "",
+    updatedAt: "",
   });
 
   // Handle input change
@@ -423,24 +393,7 @@ const AddDishAddons = () => {
             className="col-span-3"
           />
 
-          <Label htmlFor="variations">Variations</Label>
-          <Input
-            id="variations"
-            placeholder="Enter Variations"
-            value={formData.variations}
-            onChange={handleInputChange}
-            className="col-span-3"
-          />
-
-          <Label htmlFor="itemUsed">Item Used</Label>
-          <Input
-            id="itemUsed"
-            placeholder="Enter Item Used"
-            value={formData.itemUsed}
-            onChange={handleInputChange}
-            className="col-span-3"
-          />
-
+          {/* 
           <Label htmlFor="mandatory" className="mt-3">
             Mandatory
           </Label>
@@ -467,7 +420,7 @@ const AddDishAddons = () => {
                 ),
               }}
             />
-          </div>
+          </div> */}
 
           <Label htmlFor="price">Price</Label>
           <Input
@@ -479,14 +432,14 @@ const AddDishAddons = () => {
             className="col-span-3"
           />
 
-          <Label htmlFor="createdBy">Created By</Label>
+          {/* <Label htmlFor="createdBy">Created By</Label>
           <Input
             id="createdBy"
             placeholder="Enter Creator's Name"
             value={formData.createdBy}
             onChange={handleInputChange}
             className="col-span-3"
-          />
+          /> */}
         </div>
 
         {/* Submit Button */}

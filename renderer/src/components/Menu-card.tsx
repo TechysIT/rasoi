@@ -7,7 +7,11 @@ import { Card, CardContent } from "@/components/ui/card";
 interface MenuItemProps {
   title: string;
   image: string;
-  addOns?: string;
+  addons?: {
+    id: string;
+    name: string;
+    defaultSelected?: boolean;
+  }[];
   note?: string;
   price: number;
   quantity?: number;
@@ -18,20 +22,34 @@ interface MenuItemProps {
 export default function MenuItem({
   title,
   image,
-  addOns,
+  addons,
   note,
   price,
   quantity = 1,
   onQuantityChange,
   onRemove,
 }: MenuItemProps) {
-  console.log("MenuItemProps", addOns);
+  console.log("MenuItem", {
+    title,
+    image,
+    addons,
+    note,
+    price,
+    quantity,
+    onQuantityChange,
+    onRemove,
+  });
   return (
     <Card className="w-full my-1 shadow-md rounded-2xl">
       <CardContent className="p-3">
         <div className="flex gap-3">
           <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md">
-            <Image src={image} alt={title} fill className="object-cover" />
+            <Image
+              src={image || "/placeholder.png"}
+              alt={title}
+              fill
+              className="object-cover"
+            />
           </div>
           <div className="flex flex-1 flex-col justify-between">
             <div>
@@ -56,14 +74,24 @@ export default function MenuItem({
                 </div>
               </div>
 
-              {addOns && (
+              {addons && (
                 <p className="text-xs 2xl:text-sm text-muted-foreground">
-                  Add on: {addOns}
+                  <span className="text-black">Add-on:</span>
+                  {addons.length > 0 ? (
+                    addons.map((addon) => (
+                      <span key={addon.id} className="ml-1 capitalize">
+                        {addon.name}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="ml-1">N/A</span>
+                  )}
                 </p>
               )}
+
               {note && (
                 <p className="text-xs 2xl:text-sm text-muted-foreground">
-                  Note: {note}
+                  <span className="text-black"> Note:</span> {note}
                 </p>
               )}
             </div>

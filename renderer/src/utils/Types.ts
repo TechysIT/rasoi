@@ -102,39 +102,42 @@ export type InventoryGRNData = {
 };
 export type DishesManagementData = {
   id: string;
-  pictures: string;
   name: string;
-  categoryId: string;
-  addedOn: string;
-  showOnMenu: boolean;
-  cost: number;
-  createdById: string;
-  createdAt: string;
-  updatedAt: string;
+  rating: number | null;
+  bowls: number;
+  persons: number;
+  price: number;
+  imageUrl: string | null;
+  itemDetails: string | null;
   deletedAt: string | null;
-  storeId: string;
-  itemUsed: {
+  // storeId: string;
+  // employeeId: string | null;
+  // categoryId: string | null;
+  createdBy: string | null;
+  categoryName: string | null;
+  dishInventories: {
     id: string;
-    storeId: string;
-    name: string;
+    inventoryItemId: string;
+    itemName: string;
     quantity: number;
-    threshold: number;
-    supplier: string;
-    createdById: string;
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
+    defaultSelected: number;
+  }[];
+  addons: {
+    id: string;
+    name: string;
+    price: number;
   }[];
 };
 
 export type AddOnsTypes = {
   id: string;
   name: string;
-  variations: string;
-  itemUsed: string;
-  mandatory: boolean;
   price: number;
-  createdBy: string;
+  dishId?: string;
+  storeId?: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
 };
 
 export type UserList = {

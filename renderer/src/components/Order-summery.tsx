@@ -143,7 +143,7 @@ export default function OrderSummary({
             activeDialog={activeDialog}
             setActiveDialog={setActiveDialog}
           >
-            <Textarea radius="sm" />
+            <Textarea radius="sm" placeholder="Write note" />
           </CustomDialog>
 
           {/* Tips Dialog */}
@@ -158,6 +158,7 @@ export default function OrderSummary({
               type="number"
               value={tipAmount}
               onChange={(e) => setTipAmount(e.target.value)}
+              placeholder="Enter the tip amount"
             />
           </CustomDialog>
         </div>
@@ -241,7 +242,7 @@ export default function OrderSummary({
         {discount > 0 && (
           <div className="flex justify-between text-sm 2xl:text-base">
             <span className="text-muted-foreground">Discount</span>
-            <span>£{discount.toFixed(2)}</span>
+            <span className="text-red-500">- £{discount.toFixed(2)}</span>
           </div>
         )}
         <div className="flex justify-between text-sm 2xl:text-base">
@@ -251,7 +252,7 @@ export default function OrderSummary({
         {tip > 0 && (
           <div className="flex justify-between text-sm 2xl:text-base">
             <span className="text-muted-foreground">Tip</span>
-            <span>£{tip.toFixed(2)}</span>
+            <span className="text-green-500">+ £{tip.toFixed(2)}</span>
           </div>
         )}
         <div className="flex justify-between pt-1 2xl:pt-3 border-t 2xl:text-lg font-medium">

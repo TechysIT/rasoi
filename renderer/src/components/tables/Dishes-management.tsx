@@ -68,6 +68,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { timeConverter } from "@/utils/timeConverter";
 
 export const columns: ColumnDef<DishesManagementData>[] = [
   {
@@ -75,8 +76,11 @@ export const columns: ColumnDef<DishesManagementData>[] = [
     header: ({ table }) => (
       <Checkbox
         checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
+          table.getIsAllPageRowsSelected()
+            ? true
+            : table.getIsSomePageRowsSelected()
+            ? "indeterminate"
+            : false
         }
         onCheckedChange={(value: boolean) =>
           table.toggleAllPageRowsSelected(!!value)
@@ -97,13 +101,13 @@ export const columns: ColumnDef<DishesManagementData>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "pictures",
+    accessorKey: "imageUrl",
     header: "Image",
     cell: ({ row }) => (
       <div className="w-12 h-12 relative">
         <Image
-          src={row.getValue("pictures")}
-          alt={row.getValue("name")}
+          src={row.getValue("imageUrl") || "/placeholder.png"}
+          alt={row.getValue("name") || "Dish"}
           fill
           className="rounded-md object-cover"
         />
@@ -118,44 +122,83 @@ export const columns: ColumnDef<DishesManagementData>[] = [
     ),
   },
   {
-    accessorKey: "category",
+    accessorKey: "categoryName",
     header: "Category",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("category")}</div>
+      <div className="capitalize">{row.getValue("categoryName")}</div>
     ),
   },
   {
-    accessorKey: "addedOn",
-    header: "Added On",
-    cell: ({ row }) => <div>{row.getValue("addedOn")}</div>,
+    accessorKey: "addons",
+    header: "Addons",
+    cell: ({ row }) => {
+      const addons = row.getValue("addons") as { name: string }[];
+      const addonNames = addons.map((a) => a.name).join(", ");
+      return <div>{addonNames || "—"}</div>;
+    },
   },
   {
-    accessorKey: "itemUsed",
+    accessorKey: "dishInventories",
     header: "Ingredients",
-    cell: ({ row }) => <div>{row.getValue("itemUsed")}</div>,
+    cell: ({ row }) => {
+      const inventories = row.getValue("dishInventories") as {
+        itemName: string;
+      }[];
+      const ingredientNames = inventories.map((inv) => inv.itemName).join(", ");
+      return <div>{ingredientNames || "—"}</div>;
+    },
   },
   {
-    accessorKey: "showOnMenu",
-    header: "Show on Menu",
-    cell: ({ row }) => (
-      <div
-        className={`font-medium ${
-          row.getValue("showOnMenu") ? "text-green-600" : "text-red-600"
-        }`}
-      >
-        {row.getValue("showOnMenu") ? "Yes" : "No"}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "cost",
+    accessorKey: "price",
     header: "Cost (£)",
-    cell: ({ row }) => <div>£{row.getValue("cost")}</div>,
+    cell: ({ row }) => <div>£{row.getValue("price")}</div>,
   },
   {
     accessorKey: "createdBy",
     header: "Created By",
     cell: ({ row }) => <div>{row.getValue("createdBy")}</div>,
+  },
+  {
+    accessorKey: "itemDetails",
+    header: "Dish Details",
+    cell: ({ row }) => (
+      <div className="font-medium">{row.getValue("itemDetails")}</div>
+    ),
+  },
+  {
+    accessorKey: "rating",
+    header: "Rating",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("rating")}</div>
+    ),
+  },
+  {
+    accessorKey: "bowls",
+    header: "Bowls",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("bowls")}</div>
+    ),
+  },
+  {
+    accessorKey: "persons",
+    header: "Persons",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("persons")}</div>
+    ),
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Created At",
+    cell: ({ row }) => {
+      return <div>{timeConverter(row.getValue("createdAt"))}</div>;
+    },
+  },
+  {
+    accessorKey: "updatedAt",
+    header: "Updated At",
+    cell: ({ row }) => {
+      return <div>{timeConverter(row.getValue("updatedAt"))}</div>;
+    },
   },
   {
     id: "actions",
