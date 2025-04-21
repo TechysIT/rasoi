@@ -142,20 +142,38 @@ export type AddOnsTypes = {
 
 export type UserList = {
   id: string;
-  franchise: string;
-  name: string;
+  storeId: string;
+  roleName: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  address: string;
   email: string;
-  phone?: string;
-  role: string;
-  lastLogin: string;
-  createdOn: string;
+  avatarPath: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  lastLogin: string | null;
 };
 
 export type UserRoles = {
   id: string;
   name: string;
-  permissions: string[];
-  createdby: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  storeId: string;
+  userManagement: boolean;
+  orderManagement: boolean;
+  inventoryManagement: boolean;
+  reportManagement: boolean;
+  menuManagement: boolean;
+  settingManagement: boolean;
+  roleManagement: boolean;
+  kithiManagement: boolean;
+  cashManagement: boolean;
+  customerManagement: boolean;
+  supplierManagement: boolean;
 };
 
 export type Order = {
@@ -166,11 +184,14 @@ export type Order = {
 export type CustomerData = {
   id: string;
   name: string;
+  email: string;
+  phone: string;
   orders: Order[];
   createdAt: string;
-  status: OrderStatus;
+  // status: OrderStatus;
   createdBy: string;
   updatedBy: string;
+  deletedAt?: string | null;
 };
 
 export enum PaymentMethod {

@@ -9,7 +9,7 @@ const dbPath = path.join(app.getPath("userData"), "local.db");
 
 // Check if the database exists and delete it
 // if (fs.existsSync(dbPath)) {
-//   fs.unlinkSync(dbPath); // Delete the existing database file
+//   fs.unlinkSync(dbPath);
 //   console.log("Deleted the existing database file.");
 // }
 
@@ -78,7 +78,7 @@ const schema = `
     menuManagement INTEGER DEFAULT 0,
     settingManagement INTEGER DEFAULT 0,
     roleManagement INTEGER DEFAULT 0,
-    kithiManagement INTEGER DEFAULT 0,
+    kitchenManagement INTEGER DEFAULT 0,
     cashManagement INTEGER DEFAULT 0,
     customerManagement INTEGER DEFAULT 0,
     supplierManagement INTEGER DEFAULT 0,
@@ -110,6 +110,7 @@ const schema = `
     name TEXT,
     email TEXT,
     phone TEXT,
+    address TEXT,
     createdAt TEXT,
     updatedAt TEXT,
     deletedAt TEXT,

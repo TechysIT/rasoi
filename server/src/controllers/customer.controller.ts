@@ -80,6 +80,19 @@ import { CustomerRegister } from "../utils/types";
 const getCustomers = asyncHandler(async (req, res) => {
   try {
     const storeId = req.params.storeId;
+    if (!storeId) {
+      throw new ApiError(400, "Store ID is required");
+    }
+
+    // Validate store
+    const store = await prisma.store.findUnique({
+      where: { id: storeId },
+    });
+    if (!store) {
+      throw new ApiError(404, "Store not found");
+    }
+
+    // Get customers for the store
     const customers = await prisma.customer.findMany({ where: { storeId } });
     res
       .status(200)

@@ -116,7 +116,15 @@ const getDishes = asyncHandler(async (req, res) => {
     }
     // Fetch all dishes by Store ID
     const dishes = await prisma.dish.findMany({
-      where: { storeId },
+      where: {
+        storeId,
+        category: {
+          deletedAt: null,
+        },
+      },
+      include: {
+        category: true,
+      },
     });
     res
       .status(200)

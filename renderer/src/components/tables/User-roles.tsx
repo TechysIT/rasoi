@@ -55,6 +55,7 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import { Label } from "../ui/label";
+import { timeConverter } from "@/utils/timeConverter";
 
 export const columns: ColumnDef<UserRoles>[] = [
   {
@@ -62,10 +63,13 @@ export const columns: ColumnDef<UserRoles>[] = [
     header: ({ table }) => (
       <Checkbox
         checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
+          table.getIsAllPageRowsSelected()
+            ? true
+            : table.getIsSomePageRowsSelected()
+            ? "indeterminate"
+            : false
         }
-        onCheckedChange={(value: any) =>
+        onCheckedChange={(value: boolean) =>
           table.toggleAllPageRowsSelected(!!value)
         }
         aria-label="Select all"
@@ -75,7 +79,7 @@ export const columns: ColumnDef<UserRoles>[] = [
     cell: ({ row }) => (
       <Checkbox
         checked={row.getIsSelected()}
-        onCheckedChange={(value: any) => row.toggleSelected(!!value)}
+        onCheckedChange={(value: boolean) => row.toggleSelected(!!value)}
         aria-label="Select row"
         className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500 data-[state=checked]:text-white"
       />
@@ -94,27 +98,54 @@ export const columns: ColumnDef<UserRoles>[] = [
     cell: ({ row }) => <div className="capitalize">{row.getValue("name")}</div>,
   },
   {
-    accessorKey: "permissions",
-    header: "permissions",
+    id: "permissions",
+    header: "Permissions",
     cell: ({ row }) => {
-      const permissions: string[] = row.getValue("permissions");
+      const role = row.original;
+
+      const permissionLabels: { [key: string]: string } = {
+        userManagement: "User",
+        orderManagement: "Order",
+        inventoryManagement: "Inventory",
+        reportManagement: "Report",
+        menuManagement: "Menu",
+        settingManagement: "Settings",
+        roleManagement: "Role",
+        kithiManagement: "Kithi",
+        cashManagement: "Cash",
+        customerManagement: "Customer",
+        supplierManagement: "Supplier",
+      };
+
+      const activePermissions = Object.entries(permissionLabels)
+        .filter(([key]) => role[key])
+        .map(([_, label]) => label);
+
       return (
         <div className="capitalize">
-          {permissions.map((permission, index) => (
-            <span key={permission}>
-              {permission}
-              {index < permissions.length - 1 ? ", " : ""}
-            </span>
-          ))}
+          {activePermissions.length > 0
+            ? activePermissions.join(", ")
+            : "No Permissions"}
         </div>
       );
     },
   },
   {
-    accessorKey: "createdby",
+    accessorKey: "createdAt",
     header: "Created By",
     cell: ({ row }) => (
-      <div className="lowercase">{row.getValue("createdby")}</div>
+      <div className="lowercase">
+        {timeConverter(row.getValue("createdAt"))}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "updatedAt",
+    header: "Updated By",
+    cell: ({ row }) => (
+      <div className="lowercase">
+        {timeConverter(row.getValue("updatedAt"))}
+      </div>
     ),
   },
   {
@@ -245,7 +276,7 @@ export function UserRolesTable({ data }: { data: UserRoles[] }) {
           >
             Import/Export
           </HeroButton>
-          <AddRole />
+          {/* <AddRole /> */}
         </div>
       </div>
 
@@ -342,103 +373,103 @@ export function UserRolesTable({ data }: { data: UserRoles[] }) {
 }
 
 // add roles
-const availablePermissions = [
-  "create_user",
-  "edit_user",
-  "delete_user",
-  "view_reports",
-  "manage_settings",
-  "approve_requests",
-];
+// const availablePermissions = [
+//   "create_user",
+//   "edit_user",
+//   "delete_user",
+//   "view_reports",
+//   "manage_settings",
+//   "approve_requests",
+// ];
 
-const AddRole = () => {
-  const [formData, setFormData] = useState<Partial<UserRoles>>({
-    name: "",
-    permissions: [],
-  });
+// const AddRole = () => {
+//   const [formData, setFormData] = useState<Partial<UserRoles>>({
+//     name: "",
+//     permissions: [],
+//   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [id]: value,
-    }));
-  };
+//   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     const { id, value } = e.target;
+//     setFormData((prev) => ({
+//       ...prev,
+//       [id]: value,
+//     }));
+//   };
 
-  const handlePermissionChange = (permission: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      permissions: prev.permissions?.includes(permission)
-        ? prev.permissions.filter((p) => p !== permission)
-        : [...(prev.permissions || []), permission],
-    }));
-  };
+//   const handlePermissionChange = (permission: string) => {
+//     setFormData((prev) => ({
+//       ...prev,
+//       permissions: prev.permissions?.includes(permission)
+//         ? prev.permissions.filter((p) => p !== permission)
+//         : [...(prev.permissions || []), permission],
+//     }));
+//   };
 
-  const handleSubmit = () => {
-    const newRole: UserRoles = {
-      id: crypto.randomUUID(),
-      name: formData.name || "",
-      permissions: formData.permissions || [],
-      createdby: "current_user@example.com",
-    };
-    console.log("New role:", newRole);
-  };
+//   const handleSubmit = () => {
+//     const newRole: UserRoles = {
+//       id: crypto.randomUUID(),
+//       name: formData.name || "",
+//       permissions: formData.permissions || [],
+//       createdby: "current_user@example.com",
+//     };
+//     console.log("New role:", newRole);
+//   };
 
-  return (
-    <Dialog>
-      <DialogTrigger className="bg-transparent text-customPrimary-500 text-md">
-        Add Role +
-      </DialogTrigger>
-      <DialogContent className="bg-white p-6 w-[480px] rounded-lg">
-        <DialogHeader>
-          <DialogTitle className="text-xl text-customPrimary-500">
-            Add New Role
-          </DialogTitle>
-        </DialogHeader>
-        <DialogClose />
-        <div className="grid gap-5 pt-7 pb-3">
-          <div className="grid grid-cols-4 gap-5">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              placeholder="Enter Role Name"
-              className="col-span-3"
-              value={formData.name}
-              onChange={handleInputChange}
-            />
-          </div>
+//   return (
+//     <Dialog>
+//       <DialogTrigger className="bg-transparent text-customPrimary-500 text-md">
+//         Add Role +
+//       </DialogTrigger>
+//       <DialogContent className="bg-white p-6 w-[480px] rounded-lg">
+//         <DialogHeader>
+//           <DialogTitle className="text-xl text-customPrimary-500">
+//             Add New Role
+//           </DialogTitle>
+//         </DialogHeader>
+//         <DialogClose />
+//         <div className="grid gap-5 pt-7 pb-3">
+//           <div className="grid grid-cols-4 gap-5">
+//             <Label htmlFor="name">Name</Label>
+//             <Input
+//               id="name"
+//               placeholder="Enter Role Name"
+//               className="col-span-3"
+//               value={formData.name}
+//               onChange={handleInputChange}
+//             />
+//           </div>
 
-          <div className="grid grid-cols-4 gap-5">
-            <Label className="self-start">Permissions</Label>
-            <div className="col-span-3 space-y-3">
-              {availablePermissions.map((permission) => (
-                <div key={permission} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={permission}
-                    checked={formData.permissions?.includes(permission)}
-                    onCheckedChange={() => handlePermissionChange(permission)}
-                    className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500"
-                  />
-                  <label
-                    htmlFor={permission}
-                    className="text-sm font-medium capitalize leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {permission.replace(/_/g, " ")}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="flex justify-end space-x-3">
-          <Button
-            className="bg-customPrimary-500 text-white hover:bg-customPrimary-600"
-            onClick={handleSubmit}
-          >
-            Add Role
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
+//           <div className="grid grid-cols-4 gap-5">
+//             <Label className="self-start">Permissions</Label>
+//             <div className="col-span-3 space-y-3">
+//               {availablePermissions.map((permission) => (
+//                 <div key={permission} className="flex items-center space-x-2">
+//                   <Checkbox
+//                     id={permission}
+//                     checked={formData.permissions?.includes(permission)}
+//                     onCheckedChange={() => handlePermissionChange(permission)}
+//                     className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500"
+//                   />
+//                   <label
+//                     htmlFor={permission}
+//                     className="text-sm font-medium capitalize leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+//                   >
+//                     {permission.replace(/_/g, " ")}
+//                   </label>
+//                 </div>
+//               ))}
+//             </div>
+//           </div>
+//         </div>
+//         <div className="flex justify-end space-x-3">
+//           <Button
+//             className="bg-customPrimary-500 text-white hover:bg-customPrimary-600"
+//             onClick={handleSubmit}
+//           >
+//             Add Role
+//           </Button>
+//         </div>
+//       </DialogContent>
+//     </Dialog>
+//   );
+// };

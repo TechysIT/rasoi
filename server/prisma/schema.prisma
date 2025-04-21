@@ -132,9 +132,8 @@ model Role {
   menuManagement      Boolean @default(false)
   settingManagement   Boolean @default(false)
   roleManagement      Boolean @default(false)
-  kithiManagement     Boolean @default(false)
+  kitchenManagement     Boolean @default(false)
   cashManagement      Boolean @default(false)
-
   customerManagement Boolean @default(false)
   supplierManagement Boolean @default(false)
 }

@@ -38,28 +38,47 @@ export default function Home() {
     const fetchCategory = async () => {
       try {
         const result = await window.ipc.invoke("getCategories", storeId);
-        // if (!result) {
-        //   throw new Error("No data received from IPC");
-        // }
-        console.log("Fetched dishes from IPC:", result);
-        setCategories(result);
+        // console.log("Fetched categories from IPC:", result);
+
+        const filteredCategories = Array.isArray(result)
+          ? result.filter((cat) => !cat.deletedAt && cat.status !== 0)
+          : [];
+
+        setCategories(filteredCategories);
+
+        fetchDishes(filteredCategories);
       } catch (error) {
-        console.error("Error fetching dishes from ipc:", error);
+        console.error("Error fetching categories from ipc:", error);
       }
     };
-    const fetchDishes = async () => {
+    const fetchDishes = async (validCategories) => {
       try {
         const result = await window.ipc.invoke("getDishes", storeId);
-        // if (!result) {
-        //   throw new Error("No data received from IPC");
-        // }
-        console.log("Fetched dishes from IPC:", result);
-        setProductData(result);
+
+        // console.log("Fetched dishes from IPC:", result);
+
+        const validCategoryIds = validCategories.map((cat) => cat.id);
+        // console.log("Valid category IDs:", validCategoryIds);
+
+        const filteredDishes = Array.isArray(result)
+          ? result.filter((dish) => {
+              const belongsToValidCategory = validCategoryIds.includes(
+                dish.categoryId
+              );
+              console.log(
+                `Checking dish: ${dish.name}, categoryId: ${dish.categoryId}, valid: ${belongsToValidCategory}`
+              );
+              return !dish.deletedAt && belongsToValidCategory;
+            })
+          : [];
+
+        // console.log("Filtered dishes:", filteredDishes);
+        setProductData(filteredDishes);
       } catch (error) {
         console.error("Error fetching dishes from ipc:", error);
       }
     };
-    fetchDishes();
+
     fetchCategory();
   }, [storeId]);
 
@@ -172,7 +191,7 @@ export default function Home() {
       className="border"
       style={{ height: "100vh", width: "100%" }}
     >
-      <ResizablePanel defaultSize={70} maxSize={85} minSize={40}>
+      <ResizablePanel defaultSize={75} maxSize={85} minSize={40}>
         <ResizablePanelGroup direction="vertical">
           <ResizablePanel defaultSize={80}>
             <div className="w-full ">
@@ -232,8 +251,8 @@ export default function Home() {
 
                 {/* Tabs Content for All Tab */}
                 <TabsContent value="all">
-                  <ScrollArea className="h-[90vh] pt-5 pb-16 mb-20 scrollbar-hide px-2 2xl:px-4">
-                    <div className="grid grid-cols-4 2xl:grid-cols-5 gap-2 2xl:gap-6 pb-16">
+                  <ScrollArea className="h-[90vh] pb-16 mb-20 scrollbar-hide px-2 2xl:px-4">
+                    <div className="grid grid-cols-5  gap-2 2xl:gap-6 pb-16">
                       {productData.map((product) => (
                         <ProductCard
                           key={product.id}
@@ -248,8 +267,8 @@ export default function Home() {
                 {/* Tabs Content for Each Category */}
                 {categories.map((category) => (
                   <TabsContent key={category.id} value={category.id}>
-                    <ScrollArea className="h-[90vh] pt-5 pb-16 mb-20 scrollbar-hide px-2 2xl:px-4">
-                      <div className="grid grid-cols-4 2xl:grid-cols-5 gap-2 2xl:gap-6 pb-16">
+                    <ScrollArea className="h-[90vh] pb-16 mb-20 scrollbar-hide px-2 2xl:px-4">
+                      <div className="grid grid-cols-5  gap-2 2xl:gap-6 pb-16">
                         {productData
                           .filter(
                             (product) => product.categoryId === category.id
@@ -271,15 +290,15 @@ export default function Home() {
         </ResizablePanelGroup>
       </ResizablePanel>
       <ResizableHandle withHandle />
-      <ResizablePanel defaultSize={30} maxSize={40} minSize={25}>
+      <ResizablePanel defaultSize={25} maxSize={40} minSize={25}>
         <ResizablePanelGroup direction="vertical">
           <ResizablePanel defaultSize={60} minSize={40}>
-            <div className="flex items-center justify-between  p-4 mx-auto bg-customSecondary-50 ">
+            <div className="flex items-center justify-between  py-2 px-4 mx-auto bg-customSecondary-50 ">
               <div>
-                <h2 className="text-customPrimary-500 font-semibold ">
+                <h2 className="text-customPrimary-500 text-sm font-semibold ">
                   Customer Order
                 </h2>
-                <p className="text-gray-500 text-sm">
+                <p className="text-gray-500 text-xs">
                   Order no: <span>ABC123abc</span>
                 </p>
               </div>
@@ -295,10 +314,10 @@ export default function Home() {
                     Dine in
                   </SelectItem>
                   <SelectItem
-                    value="takeaway"
+                    value="collection"
                     className="data-[state=checked]:bg-customPrimary-50 data-[highlighted]:bg-customPrimary-50 text-customPrimary-500"
                   >
-                    Takeaway
+                    Collection
                   </SelectItem>
                   <SelectItem
                     value="delivery"

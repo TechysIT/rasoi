@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/table";
 import { Button as HeroButton } from "@heroui/button";
 import { CustomerData, Order, OrderStatus } from "@/utils/Types";
+import { timeConverter } from "@/utils/timeConverter";
 
 // coloum sturture
 export const columns: ColumnDef<CustomerData>[] = [
@@ -53,10 +54,13 @@ export const columns: ColumnDef<CustomerData>[] = [
     header: ({ table }) => (
       <Checkbox
         checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
+          table.getIsAllPageRowsSelected()
+            ? true
+            : table.getIsSomePageRowsSelected()
+            ? "indeterminate"
+            : false
         }
-        onCheckedChange={(value: any) =>
+        onCheckedChange={(value: boolean) =>
           table.toggleAllPageRowsSelected(!!value)
         }
         aria-label="Select all"
@@ -66,7 +70,7 @@ export const columns: ColumnDef<CustomerData>[] = [
     cell: ({ row }) => (
       <Checkbox
         checked={row.getIsSelected()}
-        onCheckedChange={(value: any) => row.toggleSelected(!!value)}
+        onCheckedChange={(value: boolean) => row.toggleSelected(!!value)}
         aria-label="Select row"
         className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500 data-[state=checked]:text-white"
       />
@@ -84,54 +88,52 @@ export const columns: ColumnDef<CustomerData>[] = [
     header: "Name",
     cell: ({ row }) => <div className="capitalize">{row.getValue("name")}</div>,
   },
-  {
-    accessorKey: "orders",
-    header: "Orders",
-    cell: ({ row }) => {
-      const orders: Order[] = row.getValue("orders");
-      return (
-        <div className="capitalize">
-          {orders
-            .map((order) => `${order.item} (${order.quantity})`)
-            .join(", ")}
-        </div>
-      );
-    },
-  },
+  // {
+  //   accessorKey: "orders",
+  //   header: "Orders",
+  //   cell: ({ row }) => {
+  //     const orders: Order[] = row.getValue("orders");
+  //     return (
+  //       <div className="capitalize">
+  //         {orders
+  //           .map((order) => `${order.item} (${order.quantity})`)
+  //           .join(", ")}
+  //       </div>
+  //     );
+  //   },
+  // },
   {
     accessorKey: "createdAt",
     header: "Created At",
     cell: ({ row }) => (
-      <div className="lowercase">{row.getValue("createdAt")}</div>
+      <div className="lowercase">
+        {timeConverter(row.getValue("createdAt"))}
+      </div>
     ),
   },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-      const status: OrderStatus = row.getValue("status");
-      let statusColor = "text-gray-500";
-      if (status === "processing") statusColor = "text-blue-500";
-      if (status === "delivered") statusColor = "text-green-500";
-      if (status === "removed") statusColor = "text-red-500";
+  // {
+  //   accessorKey: "status",
+  //   header: "Status",
+  //   cell: ({ row }) => {
+  //     const status: OrderStatus = row.getValue("status");
+  //     let statusColor = "text-gray-500";
+  //     if (status === "processing") statusColor = "text-blue-500";
+  //     if (status === "delivered") statusColor = "text-green-500";
+  //     if (status === "removed") statusColor = "text-red-500";
 
-      return (
-        <div className={`capitalize font-medium ${statusColor}`}>{status}</div>
-      );
-    },
-  },
-  {
-    accessorKey: "createdBy",
-    header: "Created By",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("createdBy")}</div>
-    ),
-  },
+  //     return (
+  //       <div className={`capitalize font-medium ${statusColor}`}>{status}</div>
+  //     );
+  //   },
+  // },
+
   {
     accessorKey: "updatedBy",
     header: "Updated By",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("updatedBy")}</div>
+      <div className="capitalize">
+        {timeConverter(row.getValue("updatedBy"))}
+      </div>
     ),
   },
   {

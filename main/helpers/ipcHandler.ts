@@ -1,8 +1,18 @@
 import { ipcMain } from "electron";
 import db from "./database";
 import axios from "axios";
+import dns from "dns";
 
 export default function ipcHandler() {
+  // check online
+  function checkInternet(): Promise<boolean> {
+    return new Promise((resolve) => {
+      dns.lookup("google.com", (err) => {
+        resolve(!err);
+      });
+    });
+  }
+
   // fetch store
   ipcMain.handle("getStores", async (_event, organizationId) => {
     console.log(
@@ -68,6 +78,7 @@ export default function ipcHandler() {
       return [];
     }
   });
+
   //fetch employee
   ipcMain.handle("getEmployeesByStore", async (_event, storeId) => {
     // console.log("Received request to get employees for storeId:", storeId);
@@ -88,13 +99,62 @@ export default function ipcHandler() {
 
         if (Array.isArray(roles) && roles.length > 0) {
           const insertRoleStmt = db.prepare(
-            `INSERT INTO roles (id, name, storeId) VALUES (?, ?, ?) 
-             ON CONFLICT(id) DO UPDATE SET name=excluded.name`
+            `INSERT INTO roles (
+              id, name, storeId,
+              userManagement, orderManagement, inventoryManagement, reportManagement,
+              menuManagement, settingManagement, roleManagement, kitchenManagement,
+              cashManagement, customerManagement, supplierManagement,
+              createdAt, updatedAt, deletedAt
+            ) VALUES (
+              ?, ?, ?,
+              ?, ?, ?, ?,
+              ?, ?, ?, ?,
+              ?, ?, ?,
+              ?, ?, ?
+            )
+            ON CONFLICT(id) DO UPDATE SET
+              name=excluded.name,
+              userManagement=excluded.userManagement,
+              orderManagement=excluded.orderManagement,
+              inventoryManagement=excluded.inventoryManagement,
+              reportManagement=excluded.reportManagement,
+              menuManagement=excluded.menuManagement,
+              settingManagement=excluded.settingManagement,
+              roleManagement=excluded.roleManagement,
+              kitchenManagement=excluded.kitchenManagement,
+              cashManagement=excluded.cashManagement,
+              customerManagement=excluded.customerManagement,
+              supplierManagement=excluded.supplierManagement,
+              createdAt=excluded.createdAt,
+              updatedAt=excluded.updatedAt,
+              deletedAt=excluded.deletedAt`
           );
 
           const insertRoles = db.transaction((roles) => {
             for (const role of roles) {
-              insertRoleStmt.run(role.id, role.name, storeId);
+              insertRoleStmt.run(
+                role.id,
+                role.name,
+                role.storeId,
+
+                role.userManagement ? 1 : 0,
+                role.orderManagement ? 1 : 0,
+                role.inventoryManagement ? 1 : 0,
+                role.reportManagement ? 1 : 0,
+
+                role.menuManagement ? 1 : 0,
+                role.settingManagement ? 1 : 0,
+                role.roleManagement ? 1 : 0,
+                role.kitchenManagement ? 1 : 0,
+
+                role.cashManagement ? 1 : 0,
+                role.customerManagement ? 1 : 0,
+                role.supplierManagement ? 1 : 0,
+
+                role.createdAt ?? null,
+                role.updatedAt ?? null,
+                role.deletedAt ?? null
+              );
             }
           });
 
@@ -681,4 +741,342 @@ export default function ipcHandler() {
       return [];
     }
   });
+
+  // fetch roles
+  ipcMain.handle("getRoles", async (_event, storeId) => {
+    console.log("Received request to get roles for storeId:", storeId);
+
+    try {
+      const roles = db
+        .prepare(
+          "SELECT * FROM roles WHERE storeId = ? ORDER BY datetime(createdAt) ASC"
+        )
+        .all(storeId);
+
+      console.log("Returning local roles:", roles);
+      return roles;
+    } catch (error) {
+      console.error("Error fetching roles from local DB:", error);
+      return [];
+    }
+  });
+
+  // fetch employee
+  ipcMain.handle("getEmployees", async (_event, storeId) => {
+    console.log("Received request to get employees for storeId:", storeId);
+
+    try {
+      const employees = db
+        .prepare(
+          `SELECT 
+            e.*, 
+            r.name AS roleName
+          FROM employees e
+          LEFT JOIN roles r ON e.roleId = r.id
+          WHERE e.storeId = ?
+          ORDER BY datetime(e.createdAt) DESC`
+        )
+        .all(storeId);
+
+      console.log("Returning local employees with role names:", employees);
+      return employees;
+    } catch (error) {
+      console.error("Error fetching employees from local DB:", error);
+      return [];
+    }
+  });
+
+  // fetch customer
+  ipcMain.handle("getCustomers", async (_event, storeId) => {
+    console.log("Fetching customers for storeId:", storeId);
+
+    try {
+      // Define the type for the customer
+      type Customer = {
+        id: string;
+        storeId: string;
+        name: string;
+        phone: string;
+        email: string;
+        address: string;
+        createdAt: string;
+        updatedAt: string;
+        deletedAt: string | null;
+      };
+
+      // Fetch customers from the local database
+      let customers = db
+        .prepare("SELECT * FROM customers WHERE storeId = ?")
+        .all(storeId) as Customer[];
+
+      // If no customers are found, fetch from the API
+      if (customers.length === 0) {
+        console.log("No local customers found, fetching from API...");
+
+        const response = await axios.get(
+          `http://localhost:8000/api/v1/customer/get/${storeId}`
+        );
+        const remoteCustomers = response.data.data;
+
+        if (!Array.isArray(remoteCustomers)) {
+          console.error("Invalid API response for customers.");
+          return [];
+        }
+
+        // Insert remote customers into the local database
+        const insertStmt = db.prepare(`
+          INSERT INTO customers (
+            id, storeId, name, phone, email, address,
+            createdAt, updatedAt, deletedAt
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        const insertMany = db.transaction((data) => {
+          for (const c of data) {
+            insertStmt.run(
+              c.id,
+              c.storeId,
+              c.name,
+              c.phone || "",
+              c.email || "",
+              c.address || "",
+              c.createdAt,
+              c.updatedAt,
+              c.deletedAt || null
+            );
+          }
+        });
+
+        insertMany(remoteCustomers);
+        console.log("Remote customers have been stored locally.");
+
+        // Fetch the updated customers from the local database
+        customers = db
+          .prepare("SELECT * FROM customers WHERE storeId = ?")
+          .all(storeId) as Customer[];
+      }
+
+      // Prepare the query for fetching orders related to each customer
+      const getOrdersStmt = db.prepare(`
+        SELECT id, name, quantity, status, customerId
+        FROM orders
+        WHERE customerId = ?
+      `);
+
+      // Map customers and attach their orders, ensuring correct types for orders
+      const customersWithOrders: {
+        id: string;
+        storeId: string;
+        name: string;
+        phone: string;
+        email: string;
+        address: string;
+        createdAt: string;
+        updatedAt: string;
+        deletedAt: string | null;
+        orders: {
+          id: string;
+          name: string;
+          quantity: number;
+          status: string;
+        }[];
+      }[] = customers.map((customer) => {
+        // Explicitly assert the type of customer here
+        const typedCustomer = customer as Customer;
+
+        // Fetch orders for the customer and assert the correct type
+        const orders = getOrdersStmt.all(typedCustomer.id) as {
+          id: string;
+          name: string;
+          quantity: number;
+          status: string;
+        }[];
+
+        return {
+          id: typedCustomer.id,
+          storeId: typedCustomer.storeId,
+          name: typedCustomer.name,
+          phone: typedCustomer.phone,
+          email: typedCustomer.email,
+          address: typedCustomer.address,
+          createdAt: typedCustomer.createdAt,
+          updatedAt: typedCustomer.updatedAt,
+          deletedAt: typedCustomer.deletedAt,
+          orders,
+        };
+      });
+
+      console.log("Returning customers with orders:", customersWithOrders);
+      return customersWithOrders;
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+      return [];
+    }
+  });
+
+  // fetch profile
+  ipcMain.handle("getProfile", async (_event, userId) => {
+    console.log("Received request to get profile for userId:", userId);
+
+    try {
+      const employee = db
+        .prepare(
+          `SELECT 
+            e.*, 
+            e.firstName || ' ' || e.lastName AS name, 
+            r.name AS roleName,
+            s.name AS storeName
+          FROM employees e
+          LEFT JOIN roles r ON e.roleId = r.id
+          LEFT JOIN stores s ON e.storeId = s.id
+          WHERE e.id = ?`
+        )
+        .get(userId);
+
+      console.log("Returning profile with role and store name:", employee);
+      return employee;
+    } catch (error) {
+      console.error("Error fetching profile from local DB:", error);
+      return null;
+    }
+  });
+
+  // delete category
+  ipcMain.handle("softDeleteCategory", async (_event, categoryId) => {
+    if (!categoryId) {
+      console.warn("No categoryId provided to softDeleteCategory");
+      return { success: false, message: "Category ID is required" };
+    }
+
+    try {
+      const deletedAt = new Date().toISOString();
+      const stmt = db.prepare(`
+        UPDATE categories
+        SET deletedAt = ?
+        WHERE id = ?
+      `);
+      const result = stmt.run(deletedAt, categoryId);
+
+      if (result.changes === 0) {
+        console.warn(`No category found with ID: ${categoryId}`);
+        return { success: false, message: "Category not found locally" };
+      }
+
+      console.log(`Category ${categoryId} soft-deleted locally.`);
+
+      const hasInternet = await checkInternet();
+
+      console.log("Internet status:", hasInternet);
+
+      if (hasInternet) {
+        try {
+          await axios.delete(
+            `http://localhost:8000/api/v1/category/delete/${categoryId}`,
+            {
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          console.log(" Category delete synced with remote server");
+        } catch (apiError) {
+          console.warn("Remote delete failed:", apiError.message);
+        }
+      } else {
+        console.warn("Offline or server down. Delete will sync later.");
+      }
+
+      return {
+        success: true,
+        id: categoryId,
+        message: "Category deleted successfully",
+      };
+    } catch (error) {
+      console.error("Error in softDeleteCategory IPC:", error);
+      return {
+        success: false,
+        message: "Internal error deleting category",
+        error: error.message,
+      };
+    }
+  });
+
+  //update category status
+  ipcMain.handle(
+    "updateCategoryStatus",
+    async (_event, { categoryId, newStatus }) => {
+      if (!categoryId) {
+        console.warn("No categoryId provided to updateCategoryStatus");
+        return { success: false, message: "Category ID is required" };
+      }
+
+      if (typeof newStatus !== "boolean") {
+        console.warn("Invalid status provided. Expected a boolean value");
+        return {
+          success: false,
+          message: "Valid status (true/false) is required",
+        };
+      }
+
+      try {
+        const stmt = db.prepare(`
+        UPDATE categories
+        SET status = ?, updatedAt = ?
+        WHERE id = ?
+      `);
+        const result = stmt.run(
+          newStatus ? 1 : 0,
+          new Date().toISOString(),
+          categoryId
+        );
+
+        if (result.changes === 0) {
+          console.warn(`No category found with ID: ${categoryId}`);
+          return { success: false, message: "Category not found locally" };
+        }
+
+        console.log(
+          `Category ${categoryId} status updated locally to ${
+            newStatus ? "active" : "inactive"
+          }.`
+        );
+
+        const hasInternet = await checkInternet();
+
+        if (hasInternet) {
+          try {
+            await axios.patch(
+              `http://localhost:8000/api/v1/category/status/${categoryId}`,
+              { status: newStatus },
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+            console.log("Category status update synced with remote server");
+          } catch (apiError) {
+            console.warn("Remote update failed:", apiError.message);
+          }
+        } else {
+          console.warn("Offline or server down. Update will sync later.");
+        }
+
+        return {
+          success: true,
+          id: categoryId,
+          message: `Category status updated to ${
+            newStatus ? "active" : "inactive"
+          }`,
+        };
+      } catch (error) {
+        console.error("Error in updateCategoryStatus IPC:", error);
+        return {
+          success: false,
+          message: "Internal error updating category status",
+          error: error.message,
+        };
+      }
+    }
+  );
 }

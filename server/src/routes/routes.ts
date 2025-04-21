@@ -11,7 +11,12 @@ import {
   addInventory,
   getInventory,
 } from "../controllers/inventory.controller";
-import { addCategory, getCategories } from "../controllers/category.controller";
+import {
+  addCategory,
+  deleteCategory,
+  getCategories,
+  updateCategoryStatus,
+} from "../controllers/category.controller";
 import {
   getAddons,
   getAddonsByStoreId,
@@ -37,6 +42,7 @@ router.route("/store/getStore").get(getStores);
 
 //customer
 // router.route("/customer/register").post(addCustomer);
+router.route("/customer/get/:storeId").get(getCustomers);
 
 //order
 // router.route("/order/create").post(createOrder);
@@ -48,6 +54,8 @@ router.route("/inventory/get/:storeId").get(getInventory);
 // category
 router.route("/category/add").post(addCategory);
 router.route("/category/get/:storeId").get(getCategories);
+router.route("/category/delete/:id").delete(deleteCategory);
+router.route("/category/status/:id").patch(updateCategoryStatus);
 
 // dish
 // router.route("/dish/add").post(upload.single("picturePath"), addDish);

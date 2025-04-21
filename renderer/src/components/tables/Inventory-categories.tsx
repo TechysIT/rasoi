@@ -1,8 +1,6 @@
-"use client";
-
 // Global imports
 import * as React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -16,9 +14,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import {
-  ArrowDownIcon,
-  ArrowUpDown,
-  ArrowUpIcon,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -46,145 +41,151 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { Switch, cn, Button as HeroButton } from "@heroui/react";
+import { cn, Button as HeroButton } from "@heroui/react";
 import { InventoryCategoryData } from "@/utils/Types";
 import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/dialog";
-import { customTransition, customVariants } from "@/lib/constant";
+} from "../ui/dialog-cn";
 import { Label } from "../ui/label";
-
-// coloum sturture
-export const columns: ColumnDef<InventoryCategoryData>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected()
-            ? true
-            : table.getIsSomePageRowsSelected()
-            ? "indeterminate"
-            : false
-        }
-        onCheckedChange={(value: boolean) =>
-          table.toggleAllPageRowsSelected(!!value)
-        }
-        aria-label="Select all"
-        className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500 data-[state=checked]:text-white"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value: boolean) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-        className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500 data-[state=checked]:text-white"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "id",
-    header: "ID",
-    cell: ({ row }) => <div className="lowercase">{row.getValue("id")}</div>,
-  },
-  {
-    accessorKey: "name",
-    header: "Category Name",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("name")}</div>,
-  },
-  {
-    accessorKey: "categoryIndex",
-    header: "Category Name",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("categoryIndex")}</div>
-    ),
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-      const status = row.getValue("status");
-
-      const handleStatusChange = (newStatus: boolean) => {
-        console.log("New Status:", newStatus);
-      };
-
-      return (
-        <Switch
-          classNames={{
-            base: cn(
-              "inline-flex flex-row-reverse w-full items-center justify-between cursor-pointer rounded-lg gap-2 p-4 border-transparent",
-              "bg-transparent hover:bg-none",
-              "data-[selected=true]:bg-none"
-            ),
-            wrapper: cn(
-              "p-0 h-4 overflow-visible",
-              "group-data-[selected=true]:bg-orange-500"
-            ),
-            thumb: cn(
-              "w-6 h-6 border-2 shadow-lg transition-all",
-              "group-data-[hover=true]:border-orange-500",
-              "group-data-[selected=true]:ms-6",
-              "group-data-[selected=true]:bg-white",
-              "group-data-[selected=true]:border-orange-500",
-              "group-data-[pressed=true]:w-6",
-              "group-data-[selected]:group-data-[pressed]:ms-4"
-            ),
-          }}
-        />
-      );
-    },
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      return (
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="h-5 w-5 p-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
-            >
-              <Menu className="h-4 w-4 text-customPrimary-500" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="bg-white px-3 py-3 rounded-lg text-customPrimary-500 max-w-44"
-          >
-            <DropdownMenuItem className="capitalize hover:text-customPrimary-500 hover:bg-customPrimary-50 focus:bg-customPrimary-50 focus:text-customPrimary-500">
-              View
-            </DropdownMenuItem>
-            <DropdownMenuItem className="capitalize hover:text-customPrimary-500 hover:bg-customPrimary-50 focus:bg-customPrimary-50 focus:text-customPrimary-500">
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem className="capitalize hover:text-customPrimary-500 hover:bg-customPrimary-50 focus:bg-customPrimary-50 focus:text-customPrimary-500">
-              Delete
-            </DropdownMenuItem>
-            <DropdownMenuItem className="capitalize hover:text-customPrimary-500 hover:bg-customPrimary-50 focus:bg-customPrimary-50 focus:text-customPrimary-500">
-              Clone
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-];
+import { toast } from "sonner";
+import { Switch } from "../ui/switch";
 
 export function InventoryCategoryTable({
   data,
+  refreshCategories,
 }: {
   data: InventoryCategoryData[];
+  refreshCategories: () => void;
 }) {
+  // coloum sturture
+  const columns: ColumnDef<InventoryCategoryData>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected()
+              ? true
+              : table.getIsSomePageRowsSelected()
+              ? "indeterminate"
+              : false
+          }
+          onCheckedChange={(value: boolean) =>
+            table.toggleAllPageRowsSelected(!!value)
+          }
+          aria-label="Select all"
+          className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500 data-[state=checked]:text-white"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value: boolean) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+          className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500 data-[state=checked]:text-white"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "id",
+      header: "ID",
+      cell: ({ row }) => <div className="lowercase">{row.getValue("id")}</div>,
+    },
+    {
+      accessorKey: "name",
+      header: "Category Name",
+      cell: ({ row }) => (
+        <div className="capitalize">{row.getValue("name")}</div>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const categoryId = row.getValue("id");
+        const status = row.getValue("status");
+        const [isChecked, setIsChecked] = useState(status === 1);
+
+        useEffect(() => {
+          setIsChecked(status === 1);
+        }, [status]);
+
+        const handleStatusChange = async (checked: boolean) => {
+          setIsChecked(checked);
+          try {
+            const result = await window.ipc.invoke("updateCategoryStatus", {
+              categoryId,
+              newStatus: checked,
+            });
+
+            if (result.success) {
+              console.log("Status updated successfully");
+            } else {
+              console.warn("Failed to update status:", result.message);
+            }
+          } catch (error) {
+            console.error("Error updating status:", error);
+          }
+        };
+
+        return (
+          <Switch
+            checked={isChecked}
+            onCheckedChange={handleStatusChange}
+            className="bg-customPrimary-500"
+          />
+        );
+      },
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        return (
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="h-5 w-5 p-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              >
+                <Menu className="h-4 w-4 text-customPrimary-500" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="capitalize bg-white px-3 py-3 rounded-lg text-customPrimary-500 max-w-44"
+            >
+              <DropdownMenuItem className=" hover:text-customPrimary-500 hover:bg-customPrimary-50 focus:bg-customPrimary-50 focus:text-customPrimary-500">
+                View
+              </DropdownMenuItem>
+              <DropdownMenuItem className=" hover:text-customPrimary-500 hover:bg-customPrimary-50 focus:bg-customPrimary-50 focus:text-customPrimary-500">
+                Edit
+              </DropdownMenuItem>
+
+              <DeleteWithConfirmation
+                id={row.original.id}
+                onDelete={refreshCategories}
+                name={row.original.name}
+              />
+
+              <DropdownMenuItem className="hover:text-customPrimary-500 hover:bg-customPrimary-50 focus:bg-customPrimary-50 focus:text-customPrimary-500">
+                Clone
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -367,7 +368,7 @@ export function InventoryCategoryTable({
 
 const AddCategory = () => {
   return (
-    <Dialog variants={customVariants} transition={customTransition}>
+    <Dialog>
       <DialogTrigger className="bg-transparent text-customPrimary-500  text-md">
         Add item +
       </DialogTrigger>
@@ -396,36 +397,70 @@ const AddCategory = () => {
           <Label htmlFor="status" className="grid grid-cols-1">
             Status <span className="text-xs text-gray-400">(On or Off)</span>
           </Label>
-          <Switch
-            id="status"
-            name="status"
-            classNames={{
-              base: cn(
-                "inline-flex flex-row-reverse w-full items-center justify-between cursor-pointer rounded-lg gap-2 p-4 col-span-3 border-transparent",
-                "bg-transparent hover:bg-none",
-                "data-[selected=true]:bg-none"
-              ),
-              wrapper: cn(
-                "p-0 h-4 overflow-visible",
-                "group-data-[selected=true]:bg-orange-500"
-              ),
-              thumb: cn(
-                "w-6 h-6 border-2 shadow-lg transition-all",
-                "group-data-[hover=true]:border-orange-500",
-                "group-data-[selected=true]:ms-6",
-                "group-data-[selected=true]:bg-white",
-                "group-data-[selected=true]:border-orange-500",
-                "group-data-[pressed=true]:w-6",
-                "group-data-[selected]:group-data-[pressed]:ms-4"
-              ),
-            }}
-          />
         </div>
         <div className="flex justify-end space-x-3">
           <HeroButton size="sm" className="bg-customPrimary-500  text-white">
             Add Item
           </HeroButton>
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const DeleteWithConfirmation = ({
+  id,
+  name,
+  onDelete,
+}: {
+  id: string;
+  name?: string;
+  onDelete: () => void;
+}) => {
+  const [open, setOpen] = useState(false);
+
+  console.log("DeleteWithConfirmation id:", id);
+
+  const handleDelete = async () => {
+    try {
+      await window.ipc.invoke("softDeleteCategory", id);
+      toast.success(`Category ${name} deleted successfully.`, {
+        duration: 3000,
+      });
+      setOpen(false);
+      onDelete();
+    } catch (error) {
+      toast.error("Error deleting category. Please try again.", {
+        duration: 3000,
+      });
+      console.error("Error deleting category:", error);
+    } finally {
+      setOpen(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger className="hover:text-customPrimary-500 hover:bg-customPrimary-50 focus:bg-customPrimary-50 focus:text-customPrimary-500 text-sm w-full py-1.5 rounded-sm text-start px-2">
+        Delete
+      </DialogTrigger>
+
+      <DialogContent className="sm:max-w-[400px]">
+        <DialogHeader>
+          <DialogTitle>Are you sure?</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          This action cannot be undone. Are you sure you want to delete this
+          item?
+        </p>
+        <DialogFooter className="mt-4">
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={handleDelete}>
+            Confirm Delete
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -1,27 +1,27 @@
 "use client";
 
 // Global Imports
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Bell, CheckCircle, Truck } from "lucide-react";
 // Local Imports
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ShiftLog from "@/components/Shift-log";
-import Image from "next/image";
 import UploadProfile from "@/components/Upload-profile";
 import { Avatar } from "@heroui/avatar";
 import { Button, Input } from "@heroui/react";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const user = {
-  name: "Esther Howard",
-  email: "estherhoward@gmail.com",
-  role: "Admin",
-  franchise: "Coca Cola",
-  photo: "/images/placeholder.jpg",
-  phone: "765464544",
-  username: "opurbo7",
-  password: "",
-};
+// const user = {
+//   name: "Esther Howard",
+//   email: "estherhoward@gmail.com",
+//   role: "Admin",
+//   franchise: "Coca Cola",
+//   photo: "/images/placeholder.jpg",
+//   phone: "765464544",
+//   username: "opurbo7",
+//   password: "",
+// };
 
 const notifications: Array<{
   iconType: "order" | "update" | "delivery";
@@ -47,30 +47,75 @@ const notifications: Array<{
 ];
 
 export default function Profile() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const userId = "c89c2c30-e9d3-4d85-9f98-23ed47f52a0f";
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await window.ipc.invoke("getProfile", userId);
+        console.log(user);
+        setUser(user);
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [userId]);
+
+  if (!user) {
+    return <div>User not found</div>;
+  }
+
   return (
     <div className="m-5 space-y-5 container mx-auto">
       <h2 className="text-2xl font-semibold text-customPrimary-500 text-center">
         Account Details
       </h2>
       <div className="flex flex-wrap justify-start items-center gap-5">
-        <Avatar
-          className="w-32 h-32"
-          src={user.photo || "/images/placeholder.jpg"}
-        />
+        {loading ? (
+          <Skeleton className="w-32 h-32 rounded-full" />
+        ) : (
+          <Avatar
+            showFallback
+            name={user?.name?.split(" ")[0] || ""}
+            className="w-32 h-32"
+            src={user?.avatarPath || ""}
+          />
+        )}
         <div className="space-y-1">
-          <h5 className="text-body font-semibold">{user.name}</h5>
-          <p className="text-tag">{user.email}</p>
-          <p className="text-tag">
-            Franchise:
-            <span className="ml-2">{user.franchise || "Not Assigned"}</span>
-          </p>
-          <p className="text-tag">
-            Role:
-            <span className="ml-2">{user.role || "Not Assigned"}</span>
-          </p>
+          {loading ? (
+            <>
+              <Skeleton className="w-40 h-6" />
+              <Skeleton className="w-64 h-6" />
+              <Skeleton className="w-48 h-6" />
+            </>
+          ) : (
+            <>
+              <p className="text-tag">{user?.email || "No Email"}</p>
+              <p className="text-tag">
+                Franchise:
+                <span className="ml-2">
+                  {user?.storeName || "Not Assigned"}
+                </span>
+              </p>
+              <p className="text-tag">
+                Role:
+                <span className="ml-2">{user?.roleName || "Not Assigned"}</span>
+              </p>
+            </>
+          )}
         </div>
       </div>
-      <UploadProfile previousImage={user.photo || "/images/placeholder.jpg"} />
+      <UploadProfile
+        previousImage={user.avatarPath || ""}
+        fallbackText={user.name?.split(" ")[0] || "User"}
+      />
 
       <Tabs defaultValue="profile">
         <TabsList className="grid w-full grid-cols-3 bg-customPrimary-50">
@@ -98,7 +143,7 @@ export default function Profile() {
         <TabsContent value="profile">
           <div className="grid sm:grid-cols-2 gap-5 my-5">
             <InputField label="Full name" value={user.name} />
-            <InputField label="Username" value={user.username} />
+            {/* <InputField label="Username" value={user.username} /> */}
             <InputField label="Email" value={user.email} />
             <InputField label="Phone no" value={user.phone} />
             <PasswordInput label="Current Password" />

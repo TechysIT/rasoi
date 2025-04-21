@@ -9,28 +9,31 @@ export default function ManageCategories() {
   const [error, setError] = useState<string | null>(null);
 
   const storeId = "ef298430-00aa-4a11-96a0-d313378ce8f0";
-  useEffect(() => {
-    if (!storeId) return;
 
-    const fetchCategories = async () => {
-      setLoading(true);
-      try {
-        const response = await window.ipc.invoke("getCategories", storeId);
-        console.log(response);
-        if (Array.isArray(response)) {
-          setCategories(response);
-        } else {
-          setCategories([]);
-        }
-      } catch (err) {
-        console.error("Error fetching categories:", err);
-        setError("Something went wrong. Please try again.");
-        toast.error("Failed to load categories. Please try again.");
-      } finally {
-        setLoading(false);
+  if (!storeId) {
+    return <p className="text-red-500">Store ID is not available.</p>;
+  }
+
+  const fetchCategories = async () => {
+    setLoading(true);
+    try {
+      const response = await window.ipc.invoke("getCategories", storeId);
+      if (Array.isArray(response)) {
+        const filtered = response.filter((cat) => !cat.deletedAt);
+        setCategories(filtered);
+      } else {
+        setCategories([]);
       }
-    };
+    } catch (err) {
+      console.error("Error fetching categories:", err);
+      setError("Something went wrong. Please try again.");
+      toast.error("Failed to load categories. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchCategories();
   }, [storeId]);
 
@@ -38,7 +41,10 @@ export default function ManageCategories() {
     <div className="container overflow-auto pb-20">
       {loading && <p>Loading categories...</p>}
       {error && <p className="text-red-500">{error}</p>}
-      <InventoryCategoryTable data={categories} />
+      <InventoryCategoryTable
+        data={categories}
+        refreshCategories={() => fetchCategories()}
+      />
     </div>
   );
 }

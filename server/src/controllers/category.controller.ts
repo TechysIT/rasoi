@@ -89,4 +89,66 @@ const getCategories = asyncHandler(async (req, res) => {
   }
 });
 
-export { addCategory, getCategories };
+const deleteCategory = asyncHandler(async (req, res) => {
+  try {
+    const categoryId = req.params.id;
+
+    if (!categoryId) {
+      throw new ApiError(400, "Category ID is required");
+    }
+
+    // Check if category exists
+    const category = await prisma.category.findUnique({
+      where: { id: categoryId },
+    });
+
+    if (!category) {
+      throw new ApiError(404, "Category not found");
+    }
+
+    // Soft delete
+    const deletedCategory = await prisma.category.update({
+      where: { id: categoryId },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, deletedCategory, "Category soft deleted"));
+  } catch (error: any) {
+    throw new ApiError(500, "Internal Server Error", error);
+  }
+});
+
+const updateCategoryStatus = asyncHandler(async (req, res) => {
+  const categoryId = req.params.id;
+  const { status } = req.body;
+
+  if (!categoryId || typeof status !== "boolean") {
+    throw new ApiError(400, "Category ID and valid status are required");
+  }
+
+  const category = await prisma.category.findUnique({
+    where: { id: categoryId },
+  });
+
+  if (!category) {
+    throw new ApiError(404, "Category not found");
+  }
+
+  const updatedCategory = await prisma.category.update({
+    where: { id: categoryId },
+    data: {
+      updatedAt: new Date(),
+      status,
+    },
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedCategory, "Category status updated"));
+});
+
+export { addCategory, getCategories, deleteCategory, updateCategoryStatus };

@@ -94,7 +94,7 @@ export default function Navbar() {
                   <Clock />
                   <span>Clock in/ out</span>
                 </PopUpAnimation> */}
-                <Link href={"/temp/members"}>
+                <Link href={"/auth/members"}>
                   <PopUpAnimation
                     delay={3 * 0.05}
                     className="flex justify-start items-center space-x-2 hover:bg-customPrimary-50 rounded-2xl py-1.5 px-3 text-sm"
@@ -104,7 +104,7 @@ export default function Navbar() {
                   </PopUpAnimation>
                 </Link>
 
-                <Link href={"/temp/store"}>
+                <Link href={"/auth/store"}>
                   <PopUpAnimation
                     delay={3 * 0.05}
                     className="flex justify-start items-center space-x-2 hover:bg-customPrimary-50 rounded-2xl py-1.5 px-3 text-sm"

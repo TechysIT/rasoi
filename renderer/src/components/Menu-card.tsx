@@ -40,10 +40,10 @@ export default function MenuItem({
     onRemove,
   });
   return (
-    <Card className="w-full my-1 shadow-md rounded-2xl">
-      <CardContent className="p-3">
+    <Card className="w-full max-w-full my-1 shadow-md rounded-2xl">
+      <CardContent className="p-2">
         <div className="flex gap-3">
-          <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md">
+          <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md">
             <Image
               src={image || "/placeholder.png"}
               alt={title}
@@ -54,7 +54,9 @@ export default function MenuItem({
           <div className="flex flex-1 flex-col justify-between">
             <div>
               <div className="flex items-center justify-between gap-2">
-                <h3 className="font-medium text-sm 2xl:text-base">{title}</h3>
+                <h3 className="font-medium text-sm 2xl:text-base capitalize">
+                  {title}
+                </h3>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
@@ -75,22 +77,22 @@ export default function MenuItem({
               </div>
 
               {addons && (
-                <p className="text-xs 2xl:text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   <span className="text-black">Add-on:</span>
                   {addons.length > 0 ? (
                     addons.map((addon) => (
-                      <span key={addon.id} className="ml-1 capitalize">
+                      <span key={addon.id} className="ml-1 capitalize text-xs">
                         {addon.name}
                       </span>
                     ))
                   ) : (
-                    <span className="ml-1">N/A</span>
+                    <span className="ml-1 text-xs">N/A</span>
                   )}
                 </p>
               )}
 
               {note && (
-                <p className="text-xs 2xl:text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   <span className="text-black"> Note:</span> {note}
                 </p>
               )}
@@ -99,7 +101,7 @@ export default function MenuItem({
               <p className="font-medium text-customPrimary-500 ">
                 £{price.toFixed(2)}
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
                   size="icon"

@@ -62,6 +62,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import Image from "next/image";
+import { timeConverter } from "@/utils/timeConverter";
 
 // coloum sturture
 export const columns: ColumnDef<UserList>[] = [
@@ -70,10 +72,13 @@ export const columns: ColumnDef<UserList>[] = [
     header: ({ table }) => (
       <Checkbox
         checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
+          table.getIsAllPageRowsSelected()
+            ? true
+            : table.getIsSomePageRowsSelected()
+            ? "indeterminate"
+            : false
         }
-        onCheckedChange={(value: any) =>
+        onCheckedChange={(value: boolean) =>
           table.toggleAllPageRowsSelected(!!value)
         }
         aria-label="Select all"
@@ -83,7 +88,7 @@ export const columns: ColumnDef<UserList>[] = [
     cell: ({ row }) => (
       <Checkbox
         checked={row.getIsSelected()}
-        onCheckedChange={(value: any) => row.toggleSelected(!!value)}
+        onCheckedChange={(value: boolean) => row.toggleSelected(!!value)}
         aria-label="Select row"
         className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500 data-[state=checked]:text-white"
       />
@@ -97,16 +102,29 @@ export const columns: ColumnDef<UserList>[] = [
     cell: ({ row }) => <div className="lowercase">{row.getValue("id")}</div>,
   },
   {
-    accessorKey: "franchise",
-    header: "Franchise",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("franchise")}</div>
-    ),
+    accessorKey: "avatarPath",
+    header: "Photo",
+    cell: ({ row }) => {
+      const avatar = row.getValue("avatarPath") as string;
+      const imageUrl = avatar || "/placeholder.png";
+      return (
+        <Image
+          src={imageUrl}
+          alt="Avatar"
+          width={40}
+          height={40}
+          className="rounded-full object-cover"
+        />
+      );
+    },
   },
   {
-    accessorKey: "name",
+    id: "name",
     header: "Name",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("name")}</div>,
+    cell: ({ row }) => {
+      const { firstName, lastName } = row.original;
+      return <div className="capitalize">{`${firstName} ${lastName}`}</div>;
+    },
   },
   {
     accessorKey: "email",
@@ -118,8 +136,9 @@ export const columns: ColumnDef<UserList>[] = [
     header: "Phone",
     cell: ({ row }) => <div>{row.getValue("phone") || "N/A"}</div>,
   },
+
   {
-    accessorKey: "role",
+    accessorKey: "roleName",
     header: "Role",
     cell: ({ row }) => <div className="capitalize">{row.getValue("role")}</div>,
   },
@@ -128,14 +147,27 @@ export const columns: ColumnDef<UserList>[] = [
     accessorKey: "lastLogin",
     header: "Last Login",
     cell: ({ row }) => (
-      <div className="lowercase">{row.getValue("lastLogin")}</div>
+      <div className="lowercase">
+        {timeConverter(row.getValue("lastLogin"))}
+      </div>
     ),
   },
   {
-    accessorKey: "createdOn",
-    header: "Created On",
+    accessorKey: "createdAt",
+    header: "Created At",
     cell: ({ row }) => (
-      <div className="lowercase">{row.getValue("createdOn")}</div>
+      <div className="lowercase">
+        {timeConverter(row.getValue("createdAt"))}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "updatedAt",
+    header: "Updated At",
+    cell: ({ row }) => (
+      <div className="lowercase">
+        {timeConverter(row.getValue("updatedAt"))}
+      </div>
     ),
   },
   {
