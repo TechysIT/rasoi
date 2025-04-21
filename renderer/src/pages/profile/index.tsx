@@ -148,7 +148,6 @@ export default function Profile() {
         <TabsContent value="profile">
           <div className="grid grid-cols-2 gap-5 my-3">
             <InputField label="Full name" value={user.name} />
-            {/* <InputField label="Username" value={user.username} /> */}
             <InputField label="Email" value={user.email} />
             <InputField label="Phone no" value={user.phone} />
             <PasswordInput label="Current Password" />

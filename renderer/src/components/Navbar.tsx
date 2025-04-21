@@ -18,11 +18,10 @@ import { Avatar, Button, Radio, RadioGroup } from "@heroui/react";
 
 import NotificationPanel from "./Notification";
 import SearchProduct from "./Search";
-import Image from "next/image";
 import PopUpAnimation from "./Popup-animation";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogClose,
@@ -52,8 +51,9 @@ export default function Navbar() {
         <Popover>
           <PopoverTrigger>
             <Avatar
-              src={"/images/placeholder.jpg"}
-              className="border-2 border-customPrimary-500"
+              src={"/userPlaceholder.png"}
+              alt="User Avatar"
+              className="border-2 border-customPrimary-200"
             />
           </PopoverTrigger>
           <PopoverContent className="rounded-xl mr-6 w-fit">
