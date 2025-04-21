@@ -15,15 +15,15 @@ import {
 } from "@heroui/modal";
 
 type UploadProfileProps = {
-  previousImage?: string;
-  fallbackText: string;
+  previousImage: string;
 };
 
-function UploadProfile({ previousImage, fallbackText }: UploadProfileProps) {
+function UploadProfile({ previousImage }: UploadProfileProps) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
+  // Set the initial preview to the previous image
   useEffect(() => {
     if (previousImage) {
       setPreview(previousImage);
@@ -33,11 +33,13 @@ function UploadProfile({ previousImage, fallbackText }: UploadProfileProps) {
   const handleChange = (file: File) => {
     setFile(file);
 
+    // Create a file reader to read the file as a data URL for preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreview(reader.result as string);
     };
 
+    // If the file is valid, read it as a data URL
     if (file) {
       reader.readAsDataURL(file);
     } else {
@@ -45,30 +47,8 @@ function UploadProfile({ previousImage, fallbackText }: UploadProfileProps) {
     }
   };
 
-  const renderAvatar = () => {
-    if (preview) {
-      return (
-        <Image
-          src={preview}
-          alt="Profile"
-          width={100}
-          height={100}
-          className="rounded-full object-cover border"
-        />
-      );
-    } else {
-      return (
-        <div className="w-[100px] h-[100px] rounded-full bg-gray-300 flex items-center justify-center text-gray-700 font-semibold text-xl border">
-          {fallbackText}
-        </div>
-      );
-    }
-  };
-
   return (
     <>
-      <div className="mb-4 flex justify-center">{renderAvatar()}</div>
-
       <Button
         variant="ghost"
         onPress={onOpen}
@@ -85,9 +65,17 @@ function UploadProfile({ previousImage, fallbackText }: UploadProfileProps) {
                 Upload Profile
               </ModalHeader>
               <ModalBody>
-                <div className="flex justify-center items-center mb-4">
-                  {renderAvatar()}
-                </div>
+                {preview && (
+                  <div className="flex justify-center items-center">
+                    <Image
+                      src={preview}
+                      alt="Preview"
+                      width={200}
+                      height={200}
+                      className="rounded-full border object-contain"
+                    />
+                  </div>
+                )}
                 <FileUploader
                   className="bg-customPrimary-500"
                   handleChange={handleChange}

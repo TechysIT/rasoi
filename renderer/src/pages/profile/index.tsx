@@ -112,10 +112,7 @@ export default function Profile() {
           )}
         </div>
       </div>
-      <UploadProfile
-        previousImage={user.avatarPath || ""}
-        fallbackText={user.name?.split(" ")[0] || "User"}
-      />
+      <UploadProfile previousImage={user.avatarPath || ""} />
 
       <Tabs defaultValue="profile">
         <TabsList className="grid w-full grid-cols-3 bg-customPrimary-50">
