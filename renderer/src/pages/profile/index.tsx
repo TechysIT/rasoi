@@ -73,40 +73,48 @@ export default function Profile() {
   }
 
   return (
-    <div className="m-5 space-y-5 container mx-auto">
+    <ScrollArea className="container mx-auto rounded-md h-[95%] ">
       <h2 className="text-2xl font-semibold text-customPrimary-500 text-center">
         Account Details
       </h2>
       <div className="flex flex-wrap justify-start items-center gap-5">
         {loading ? (
-          <Skeleton className="w-32 h-32 rounded-full" />
+          <Skeleton className="w-28 h-28 rounded-full" />
         ) : (
           <Avatar
-            showFallback
-            name={user?.name?.split(" ")[0] || ""}
-            className="w-32 h-32"
-            src={user?.avatarPath || ""}
+            // name={user?.name?.split(" ")[0] || ""}
+            className="w-28 h-28 object-cover"
+            src={user?.avatarPath || "/userPlaceholder.png"}
           />
         )}
-        <div className="space-y-1">
+        <div className="text-sm capitalize font-medium space-y-0.5">
           {loading ? (
             <>
               <Skeleton className="w-40 h-6" />
+              <Skeleton className="w-44 h-6" />
               <Skeleton className="w-64 h-6" />
               <Skeleton className="w-48 h-6" />
             </>
           ) : (
             <>
-              <p className="text-tag">{user?.email || "No Email"}</p>
-              <p className="text-tag">
-                Franchise:
-                <span className="ml-2">
+              <p className="text-black/60 text-lg">{user?.name || "N/A"}</p>
+              <p>
+                Email:
+                <span className="ml-2 text-black/60">
+                  {user?.email || "No Email"}
+                </span>
+              </p>
+              <p>
+                Store:
+                <span className="ml-2 text-black/60">
                   {user?.storeName || "Not Assigned"}
                 </span>
               </p>
-              <p className="text-tag">
+              <p>
                 Role:
-                <span className="ml-2">{user?.roleName || "Not Assigned"}</span>
+                <span className="ml-2 text-black/60">
+                  {user?.roleName || "Not Assigned"}
+                </span>
               </p>
             </>
           )}
@@ -138,7 +146,7 @@ export default function Profile() {
 
         {/* Profile Information Tab */}
         <TabsContent value="profile">
-          <div className="grid sm:grid-cols-2 gap-5 my-5">
+          <div className="grid grid-cols-2 gap-5 my-3">
             <InputField label="Full name" value={user.name} />
             {/* <InputField label="Username" value={user.username} /> */}
             <InputField label="Email" value={user.email} />
@@ -172,7 +180,7 @@ export default function Profile() {
           <ShiftLog />
         </TabsContent>
       </Tabs>
-    </div>
+    </ScrollArea>
   );
 }
 

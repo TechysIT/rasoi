@@ -173,16 +173,3 @@
     margin: 0;
   }
 }
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px; /* Thin scrollbar */
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #4f46e5; /* Custom primary color */
-  border-radius: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
