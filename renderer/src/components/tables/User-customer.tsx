@@ -46,6 +46,7 @@ import {
 import { Button as HeroButton } from "@heroui/button";
 import { CustomerData, Order, OrderStatus } from "@/utils/Types";
 import { timeConverter } from "@/utils/timeConverter";
+import NotFound from "../error/NotFound";
 
 // coloum sturture
 export const columns: ColumnDef<CustomerData>[] = [
@@ -322,7 +323,7 @@ export function UserCustomerTable({ data }: { data: CustomerData[] }) {
                   colSpan={columns.length}
                   className="h-24 text-center hover:bg-white"
                 >
-                  No results.
+                  <NotFound />
                 </TableCell>
               </TableRow>
             )}

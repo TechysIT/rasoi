@@ -1,12 +1,18 @@
-
 import { useEffect, useState } from "react";
 import { UserTable } from "@/components/tables/User-list";
 import { UserList } from "@/utils/Types";
+import { useEmployeeStore } from "@/stores/store";
+import NotFound from "@/components/error/NotFound";
 
 export default function ManageSuppliers() {
   const [userList, setUserList] = useState<UserList[]>([]);
-  const storeId = "ef298430-00aa-4a11-96a0-d313378ce8f0";
 
+  const employee = useEmployeeStore((state) => state.employee);
+  console.log("Employee:", employee);
+  const storeId = employee?.storeId || "";
+  if (!storeId) {
+    return <NotFound text="Store ID not found" />;
+  }
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
@@ -14,7 +20,8 @@ export default function ManageSuppliers() {
           "getEmployees",
           storeId
         );
-        setUserList(employees);
+        const activeEmployees = employees.filter((user) => !user.deletedAt);
+        setUserList(activeEmployees);
       } catch (error) {
         console.error("Failed to fetch employees:", error);
         setUserList([]);

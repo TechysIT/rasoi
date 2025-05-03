@@ -36,17 +36,86 @@ export type OrderData = {
   createdBy: string;
 };
 
-export type OrderManageData = {
+export interface OrderManageData {
   id: string;
-  status: OrderStatus;
-  orderType: OrderType;
-  dateTime: string;
-  updatedOn: string;
-  dishes: { name: string; quantity: number }[];
-  price: number;
-  customerName: string;
+  storeId: string;
+  customerId: string;
+  orderType: "DINE_IN" | "TAKEAWAY" | "DELIVERY";
+  status: "PENDING" | "COMPLETED" | "CANCELLED";
+  deliveryStatus: "PENDING" | "DELIVERED" | "IN_PROGRESS";
+  amount: number;
+  paymentStatus: string;
+  peakAt: string | null;
+  popularFoodItem: string | null;
+  repeatCustomer: boolean;
+  feedbackScore: number;
+  notes: string;
+  assignedStaff: string | null;
   createdBy: string;
-};
+  updatedOn: string;
+  createdAt: string;
+  deletedAt: string | null;
+  OrderItems: OrderManageDataOrderItem[];
+  customer: OrderManageDataCustomer;
+}
+
+export interface OrderManageDataOrderItem {
+  id: string;
+  orderId: string;
+  dishId: string;
+  dishName: string;
+  quantity: number;
+  price: number;
+  dish: OrderManageDataDish;
+  OrderItemAddons: OrderManageDataOrderItemAddon[];
+}
+
+export interface OrderManageDataDish {
+  id: string;
+  name: string;
+  rating: number;
+  addOns: any;
+  bowls: number;
+  persons: number;
+  price: number;
+  imageUrl: string | null;
+  itemDetails: string;
+  deletedAt: string | null;
+  storeId: string;
+  employeeId: string;
+  categoryId: string;
+}
+
+export interface OrderManageDataOrderItemAddon {
+  id: string;
+  orderItemId: string;
+  addonId: string;
+  addonName: string;
+  addonPrice: number;
+  addon: OrderManageDataAddon;
+}
+
+export interface OrderManageDataAddon {
+  id: string;
+  dishId: string;
+  storeId: string;
+  name: string;
+  price: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+export interface OrderManageDataCustomer {
+  id: string;
+  storeId: string;
+  name: string;
+  email: string;
+  phone: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
 
 export type OrderAnalysisData = {
   id: string;
@@ -208,14 +277,14 @@ export type ExpenseData = {
   supplier: string;
 };
 
-export type Table = {
-  id: number;
+export interface Table {
+  id: string;
   name: string;
   chairs: number;
-  status: "available" | "occupied" | "reserved";
+  status: "AVAILABLE" | "OCCUPIED" | "RESERVED" | "MERGED";
   customerName?: string;
   reservationName?: string;
   reservationTime?: string;
-  mergedFrom?: number[];
-  merged?: boolean;
-};
+  mergedIntoId?: string;
+  mergedTables?: Table[];
+}

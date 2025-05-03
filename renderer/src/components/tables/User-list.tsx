@@ -64,6 +64,7 @@ import {
 } from "../ui/select";
 import Image from "next/image";
 import { timeConverter } from "@/utils/timeConverter";
+import NotFound from "../error/NotFound";
 
 // coloum sturture
 export const columns: ColumnDef<UserList>[] = [
@@ -357,7 +358,7 @@ export function UserTable({ data }: { data: UserList[] }) {
                   colSpan={columns.length}
                   className="h-24 text-center hover:bg-white"
                 >
-                  No results.
+                  <NotFound />
                 </TableCell>
               </TableRow>
             )}

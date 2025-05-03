@@ -43,47 +43,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button as NextButton } from "@nextui-org/button";
+import { Button as NextButton } from "@heroui/button";
 import { OrderManageData } from "@/utils/Types";
 
 // coloum sturture
 export const columns: ColumnDef<OrderManageData>[] = [
   {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value: any) =>
-          table.toggleAllPageRowsSelected(!!value)
-        }
-        aria-label="Select all"
-        className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500 data-[state=checked]:text-white"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value: any) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-        className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500 data-[state=checked]:text-white"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
     accessorKey: "id",
-    header: "ID",
+    header: "Order ID",
     cell: ({ row }) => <div className="lowercase">{row.getValue("id")}</div>,
   },
   {
-    accessorKey: "dateTime",
+    accessorKey: "createdAt",
     header: "Date & Time",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("dateTime")}</div>
+      <div>{new Date(row.getValue("createdAt")).toLocaleString()}</div>
     ),
   },
   {
@@ -94,28 +68,36 @@ export const columns: ColumnDef<OrderManageData>[] = [
     ),
   },
   {
-    accessorKey: "customerName",
+    accessorKey: "customer.name",
     header: "Customer Name",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("customerName")}</div>
+      <div className="capitalize">{row.original.customer?.name || "-"}</div>
     ),
   },
   {
-    accessorKey: "dishes",
+    accessorKey: "OrderItems",
     header: "Dishes",
     cell: ({ row }) => {
-      const dishes = row.getValue("dishes") as {
-        name: string;
-        quantity: number;
-      }[];
+      const dishes = row.original.OrderItems || [];
       return (
         <div className="relative group">
           {dishes.length} Items
-          <div className="absolute hidden group-hover:block bg-white border rounded-lg shadow-lg p-2 text-sm w-40">
-            {dishes.map((dish, index) => (
-              <div key={index} className="flex justify-between">
-                <span>{dish.name}</span>
-                <span>x{dish.quantity}</span>
+          <div className="absolute hidden group-hover:block bg-white border rounded-lg shadow-lg p-2 text-sm w-60 z-10">
+            {dishes.map((item, index) => (
+              <div
+                key={index}
+                className="flex flex-col border-b last:border-none pb-1"
+              >
+                <div className="flex justify-between font-medium">
+                  <span>{item.dish?.name || "Unnamed Dish"}</span>
+                  <span>x{item.quantity}</span>
+                </div>
+                {item.OrderItemAddons?.length > 0 && (
+                  <div className="ml-2 text-gray-500 text-xs">
+                    Add-ons:{" "}
+                    {item.OrderItemAddons.map((addon) => addon.addon?.name || addon.addonName).join(", ")}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -124,43 +106,94 @@ export const columns: ColumnDef<OrderManageData>[] = [
     },
   },
   {
-    accessorKey: "price",
-    header: "Price",
-    cell: ({ row }) => (
-      <div className="lowercase ">${row.getValue("price")}</div>
-    ),
+    accessorKey: "amount",
+    header: "Total Price",
+    cell: ({ row }) => {
+      const amount = row.getValue("amount") as number;
+      return <div className="font-semibold">${amount.toFixed(2)}</div>;
+    },
   },
   {
     accessorKey: "status",
     header: "Order Status",
     cell: ({ row }) => {
-      const status = row.getValue("status");
-
-      // Define color classes based on status
+      const status = row.getValue("status") as string;
       const statusColors: Record<string, string> = {
-        processing: "text-orange-500",
-        delivered: "text-green-500",
-        removed: "text-red-500",
+        PENDING: "text-orange-500",
+        COMPLETED: "text-green-500",
+        CANCELLED: "text-red-500",
       };
-
       return (
         <div
           className={`capitalize font-medium ${
-            statusColors[status as string] || "text-gray-500"
+            statusColors[status] || "text-gray-500"
           }`}
         >
-          {status as string}
+          {status}
         </div>
       );
     },
   },
-
   {
-    accessorKey: "createdBy",
+    accessorKey: "deliveryStatus",
+    header: "Delivery Status",
+    cell: ({ row }) => (
+      <div className="capitalize">
+        {row.getValue("deliveryStatus") || "N/A"}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "paymentStatus",
+    header: "Payment Status",
+    cell: ({ row }) => (
+      <div>{row.getValue("paymentStatus") || "Unpaid"}</div>
+    ),
+  },
+  {
+    accessorKey: "notes",
+    header: "Special Notes",
+    cell: ({ row }) => (
+      <div
+        className="truncate max-w-xs"
+        title={row.getValue("notes") || "No notes"}
+      >
+        {row.getValue("notes") || "-"}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "assignedStaff",
+    header: "Assigned Staff",
+    cell: ({ row }) => (
+      <div className="capitalize">
+        {row.getValue("assignedStaff") || "Unassigned"}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "employee.name", // assuming `createdBy` is populated with employee relation
     header: "Created By",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("createdBy")}</div>
+      <div className="capitalize">
+        {row.original.employee?.name || "Unknown"}
+      </div>
     ),
+  },
+  {
+    accessorKey: "updatedAt",
+    header: "Last Updated",
+    cell: ({ row }) => (
+      <div>{new Date(row.getValue("updatedAt")).toLocaleString()}</div>
+    ),
+  },
+  {
+    accessorKey: "deletedAt",
+    header: "Deleted At",
+    cell: ({ row }) => {
+      const value = row.getValue("deletedAt");
+      return <div>{value ? new Date(value).toLocaleString() : "-"}</div>;
+    },
   },
   {
     id: "actions",

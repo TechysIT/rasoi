@@ -56,6 +56,7 @@ import {
 } from "../ui/dialog";
 import { Label } from "../ui/label";
 import { timeConverter } from "@/utils/timeConverter";
+import NotFound from "../error/NotFound";
 
 export const columns: ColumnDef<UserRoles>[] = [
   {
@@ -334,7 +335,7 @@ export function UserRolesTable({ data }: { data: UserRoles[] }) {
                   colSpan={columns.length}
                   className="h-24 text-center hover:bg-white"
                 >
-                  No results.
+                  <NotFound />
                 </TableCell>
               </TableRow>
             )}

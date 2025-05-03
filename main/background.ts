@@ -2,8 +2,6 @@ import path from "path";
 import { app, ipcMain } from "electron";
 import serve from "electron-serve";
 import { createWindow } from "./helpers";
-import db from "./helpers/database";
-import axios from "axios";
 import ipcHandler from "./helpers/ipcHandler";
 require("dotenv").config();
 

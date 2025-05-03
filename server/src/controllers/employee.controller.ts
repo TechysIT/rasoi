@@ -8,6 +8,7 @@ const registerEmployees = asyncHandler(async (req, res) => {
   try {
     const { firstName, lastName, email, phone, storeId, roleId, address } =
       req.body;
+    console.log("Received Body:", req.body);
 
     // Validate inpu
 
@@ -17,6 +18,8 @@ const registerEmployees = asyncHandler(async (req, res) => {
       "email",
       "phone",
       "storeId",
+      "roleId",
+      "address",
     ];
     const missingFields = requiredFields.filter((field) => !req.body[field]);
 
@@ -104,7 +107,10 @@ const registerEmployees = asyncHandler(async (req, res) => {
             avatarPath: newEmployee.avatarPath,
             storeId: newEmployee.storeId,
             roleId: newEmployee.roleId,
+            address: newEmployee.address,
+            lastLoggedIn: newEmployee.lastLogin,
             createdAt: newEmployee.createdAt,
+            updatedAt: newEmployee.updatedAt,
           },
         },
         "Employee created successfully",

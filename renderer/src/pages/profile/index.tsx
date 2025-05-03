@@ -11,6 +11,8 @@ import UploadProfile from "@/components/Upload-profile";
 import { Avatar } from "@heroui/avatar";
 import { Button, Input } from "@heroui/react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEmployeeStore } from "@/stores/store";
+import NotFound from "@/components/error/NotFound";
 
 // const user = {
 //   name: "Esther Howard",
@@ -50,7 +52,16 @@ export default function Profile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const userId = "c89c2c30-e9d3-4d85-9f98-23ed47f52a0f";
+  const employee = useEmployeeStore((state) => state.employee);
+  // console.log("Employee:", employee);
+
+  const userId = employee?.id || "";
+
+  console.log("emp ID:", userId);
+
+  if (!userId) {
+    return <NotFound text="User ID not found" />;
+  }
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -69,7 +80,7 @@ export default function Profile() {
   }, [userId]);
 
   if (!user) {
-    return <div>User not found</div>;
+    return <NotFound text="User not found" />;
   }
 
   return (
@@ -120,7 +131,7 @@ export default function Profile() {
           )}
         </div>
       </div>
-      <UploadProfile previousImage={user.avatarPath || ""} />
+      <UploadProfile previousImage={user?.avatarPath || ""} />
 
       <Tabs defaultValue="profile">
         <TabsList className="grid w-full grid-cols-3 bg-customPrimary-50">

@@ -2,16 +2,20 @@ import { useEffect, useState } from "react";
 import { InventoryCategoryTable } from "@/components/tables/Inventory-categories";
 import { InventoryCategoryData } from "@/utils/Types";
 import { toast } from "sonner";
+import { useEmployeeStore } from "@/stores/store";
+import NotFound from "@/components/error/NotFound";
 
 export default function ManageCategories() {
   const [categories, setCategories] = useState<InventoryCategoryData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const storeId = "ef298430-00aa-4a11-96a0-d313378ce8f0";
+  const employee = useEmployeeStore((state) => state.employee);
+  const storeId = employee?.storeId || "";
 
+  // console.log("Store ID:", storeId);
   if (!storeId) {
-    return <p className="text-red-500">Store ID is not available.</p>;
+    return <NotFound text="Store ID not found" />;
   }
 
   const fetchCategories = async () => {
@@ -43,7 +47,7 @@ export default function ManageCategories() {
       {error && <p className="text-red-500">{error}</p>}
       <InventoryCategoryTable
         data={categories}
-        refreshCategories={() => fetchCategories()}
+        refreshPage={() => fetchCategories()}
       />
     </div>
   );

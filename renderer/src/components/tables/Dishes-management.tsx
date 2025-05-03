@@ -1,5 +1,3 @@
-"use client";
-
 // Global imports
 import * as React from "react";
 import { useState } from "react";
@@ -51,10 +49,11 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/dialog";
+} from "../ui/dialog-cn";
 import { FaTrashCan } from "react-icons/fa6";
 import { FileUploader } from "react-drag-drop-files";
 import { customTransition, customVariants } from "@/lib/constant";
@@ -69,179 +68,189 @@ import {
   SelectValue,
 } from "../ui/select";
 import { timeConverter } from "@/utils/timeConverter";
-
-export const columns: ColumnDef<DishesManagementData>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected()
-            ? true
-            : table.getIsSomePageRowsSelected()
-            ? "indeterminate"
-            : false
-        }
-        onCheckedChange={(value: boolean) =>
-          table.toggleAllPageRowsSelected(!!value)
-        }
-        aria-label="Select all"
-        className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500 data-[state=checked]:text-white"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value: boolean) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-        className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500 data-[state=checked]:text-white"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "imageUrl",
-    header: "Image",
-    cell: ({ row }) => (
-      <div className="w-12 h-12 relative">
-        <Image
-          src={row.getValue("imageUrl") || "/placeholder.png"}
-          alt={row.getValue("name") || "Dish"}
-          fill
-          className="rounded-md object-cover"
-        />
-      </div>
-    ),
-  },
-  {
-    accessorKey: "name",
-    header: "Dish Name",
-    cell: ({ row }) => (
-      <div className="font-medium">{row.getValue("name")}</div>
-    ),
-  },
-  {
-    accessorKey: "categoryName",
-    header: "Category",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("categoryName")}</div>
-    ),
-  },
-  {
-    accessorKey: "addons",
-    header: "Addons",
-    cell: ({ row }) => {
-      const addons = row.getValue("addons") as { name: string }[];
-      const addonNames = addons.map((a) => a.name).join(", ");
-      return <div>{addonNames || "—"}</div>;
-    },
-  },
-  {
-    accessorKey: "dishInventories",
-    header: "Ingredients",
-    cell: ({ row }) => {
-      const inventories = row.getValue("dishInventories") as {
-        itemName: string;
-      }[];
-      const ingredientNames = inventories.map((inv) => inv.itemName).join(", ");
-      return <div>{ingredientNames || "—"}</div>;
-    },
-  },
-  {
-    accessorKey: "price",
-    header: "Cost (£)",
-    cell: ({ row }) => <div>£{row.getValue("price")}</div>,
-  },
-  {
-    accessorKey: "createdBy",
-    header: "Created By",
-    cell: ({ row }) => <div>{row.getValue("createdBy")}</div>,
-  },
-  {
-    accessorKey: "itemDetails",
-    header: "Dish Details",
-    cell: ({ row }) => (
-      <div className="font-medium">{row.getValue("itemDetails")}</div>
-    ),
-  },
-  {
-    accessorKey: "rating",
-    header: "Rating",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("rating")}</div>
-    ),
-  },
-  {
-    accessorKey: "bowls",
-    header: "Bowls",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("bowls")}</div>
-    ),
-  },
-  {
-    accessorKey: "persons",
-    header: "Persons",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("persons")}</div>
-    ),
-  },
-  {
-    accessorKey: "createdAt",
-    header: "Created At",
-    cell: ({ row }) => {
-      return <div>{timeConverter(row.getValue("createdAt"))}</div>;
-    },
-  },
-  {
-    accessorKey: "updatedAt",
-    header: "Updated At",
-    cell: ({ row }) => {
-      return <div>{timeConverter(row.getValue("updatedAt"))}</div>;
-    },
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      return (
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="h-5 w-5 p-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
-            >
-              <Menu className="h-4 w-4 text-customPrimary-500" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="bg-white px-3 py-3 rounded-lg text-customPrimary-500 max-w-44"
-          >
-            <DropdownMenuItem className="capitalize hover:text-customPrimary-500 hover:bg-customPrimary-50">
-              View
-            </DropdownMenuItem>
-            <DropdownMenuItem className="capitalize hover:text-customPrimary-500 hover:bg-customPrimary-50">
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem className="capitalize hover:text-customPrimary-500 hover:bg-customPrimary-50">
-              Delete
-            </DropdownMenuItem>
-            <DropdownMenuItem className="capitalize hover:text-customPrimary-500 hover:bg-customPrimary-50">
-              Clone
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-];
+import { toast } from "sonner";
+import NotFound from "../error/NotFound";
 
 export function DishesManagementTable({
   data,
+  refreshPage,
 }: {
   data: DishesManagementData[];
+  refreshPage: () => void;
 }) {
+  const columns: ColumnDef<DishesManagementData>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected()
+              ? true
+              : table.getIsSomePageRowsSelected()
+              ? "indeterminate"
+              : false
+          }
+          onCheckedChange={(value: boolean) =>
+            table.toggleAllPageRowsSelected(!!value)
+          }
+          aria-label="Select all"
+          className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500 data-[state=checked]:text-white"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value: boolean) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+          className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500 data-[state=checked]:text-white"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "imageUrl",
+      header: "Image",
+      cell: ({ row }) => (
+        <div className="w-12 h-12 relative">
+          <Image
+            src={row.getValue("imageUrl") || "/placeholder.png"}
+            alt={row.getValue("name") || "Dish"}
+            fill
+            className="rounded-md object-cover"
+          />
+        </div>
+      ),
+    },
+    {
+      accessorKey: "name",
+      header: "Dish Name",
+      cell: ({ row }) => (
+        <div className="font-medium">{row.getValue("name")}</div>
+      ),
+    },
+    {
+      accessorKey: "categoryName",
+      header: "Category",
+      cell: ({ row }) => (
+        <div className="capitalize">{row.getValue("categoryName")}</div>
+      ),
+    },
+    {
+      accessorKey: "addons",
+      header: "Addons",
+      cell: ({ row }) => {
+        const addons = row.getValue("addons") as { name: string }[];
+        const addonNames = addons.map((a) => a.name).join(", ");
+        return <div>{addonNames || "—"}</div>;
+      },
+    },
+    {
+      accessorKey: "dishInventories",
+      header: "Ingredients",
+      cell: ({ row }) => {
+        const inventories = row.getValue("dishInventories") as {
+          itemName: string;
+        }[];
+        const ingredientNames = inventories
+          .map((inv) => inv.itemName)
+          .join(", ");
+        return <div>{ingredientNames || "—"}</div>;
+      },
+    },
+    {
+      accessorKey: "price",
+      header: "Cost (£)",
+      cell: ({ row }) => <div>£{row.getValue("price")}</div>,
+    },
+    {
+      accessorKey: "createdBy",
+      header: "Created By",
+      cell: ({ row }) => <div>{row.getValue("createdBy")}</div>,
+    },
+    {
+      accessorKey: "itemDetails",
+      header: "Dish Details",
+      cell: ({ row }) => (
+        <div className="font-medium">{row.getValue("itemDetails")}</div>
+      ),
+    },
+    {
+      accessorKey: "rating",
+      header: "Rating",
+      cell: ({ row }) => (
+        <div className="capitalize">{row.getValue("rating")}</div>
+      ),
+    },
+    {
+      accessorKey: "bowls",
+      header: "Bowls",
+      cell: ({ row }) => (
+        <div className="capitalize">{row.getValue("bowls")}</div>
+      ),
+    },
+    {
+      accessorKey: "persons",
+      header: "Persons",
+      cell: ({ row }) => (
+        <div className="capitalize">{row.getValue("persons")}</div>
+      ),
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Created At",
+      cell: ({ row }) => {
+        return <div>{timeConverter(row.getValue("createdAt"))}</div>;
+      },
+    },
+    {
+      accessorKey: "updatedAt",
+      header: "Updated At",
+      cell: ({ row }) => {
+        return <div>{timeConverter(row.getValue("updatedAt"))}</div>;
+      },
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        return (
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="h-5 w-5 p-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              >
+                <Menu className="h-4 w-4 text-customPrimary-500" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-white px-3 py-3 rounded-lg text-customPrimary-500 max-w-44"
+            >
+              <DropdownMenuItem className="capitalize hover:text-customPrimary-500 hover:bg-customPrimary-50">
+                View
+              </DropdownMenuItem>
+              <DropdownMenuItem className="capitalize hover:text-customPrimary-500 hover:bg-customPrimary-50">
+                Edit
+              </DropdownMenuItem>
+
+              <DeleteWithConfirmation
+                id={row.original.id}
+                onDelete={refreshPage}
+                name={row.original.name}
+              />
+
+              <DropdownMenuItem className="capitalize hover:text-customPrimary-500 hover:bg-customPrimary-50">
+                Clone
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -388,7 +397,7 @@ export function DishesManagementTable({
                   colSpan={columns.length}
                   className="h-24 text-center hover:bg-white"
                 >
-                  No results.
+                  <NotFound />
                 </TableCell>
               </TableRow>
             )}
@@ -445,7 +454,7 @@ const AddDish = ({ category }: { category?: CategoryTypes }) => {
   const tags = ["Mobile", "Laptop", "Car"];
 
   return (
-    <Dialog variants={customVariants} transition={customTransition}>
+    <Dialog>
       <DialogTrigger className="rounded-lg bg-customPrimary-500 text-white border border-customPrimary-500 hover:bg-customPrimary-50 hover:text-customPrimary-500 px-2">
         Add New Dish
       </DialogTrigger>
@@ -636,6 +645,64 @@ const AddDish = ({ category }: { category?: CategoryTypes }) => {
             Add
           </NextButton>
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const DeleteWithConfirmation = ({
+  id,
+  name,
+  onDelete,
+}: {
+  id: string;
+  name?: string;
+  onDelete: () => void;
+}) => {
+  const [open, setOpen] = useState(false);
+
+  console.log("DeleteWithConfirmation id:", id);
+
+  const handleDelete = async () => {
+    try {
+      await window.ipc.invoke("deleteDish", id);
+      toast.success(`Category ${name} deleted successfully.`, {
+        duration: 3000,
+      });
+      setOpen(false);
+      onDelete();
+    } catch (error) {
+      toast.error("Error deleting category. Please try again.", {
+        duration: 3000,
+      });
+      console.error("Error deleting category:", error);
+    } finally {
+      setOpen(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger className="hover:text-customPrimary-500 hover:bg-customPrimary-50 focus:bg-customPrimary-50 focus:text-customPrimary-500 text-sm w-full py-1.5 rounded-sm text-start px-2">
+        Delete
+      </DialogTrigger>
+
+      <DialogContent className="sm:max-w-[400px]">
+        <DialogHeader>
+          <DialogTitle>Are you sure?</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          This action cannot be undone. Are you sure you want to delete this
+          item?
+        </p>
+        <DialogFooter className="mt-4">
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={handleDelete}>
+            Confirm Delete
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

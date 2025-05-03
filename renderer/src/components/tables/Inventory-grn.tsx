@@ -58,8 +58,9 @@ import { Label } from "../ui/label";
 import { Switch } from "@heroui/switch";
 import { cn } from "@/utils/cn";
 import { Button as HeroButton } from "@heroui/react";
+import NotFound from "../error/NotFound";
 
-export const columns: ColumnDef<InventoryGRNData>[] = [
+const columns: ColumnDef<InventoryGRNData>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -326,7 +327,7 @@ export function OrderGRNTable({ data }: { data: InventoryGRNData[] }) {
                   colSpan={columns.length}
                   className="h-24 text-center hover:bg-white"
                 >
-                  No results.
+                  <NotFound />
                 </TableCell>
               </TableRow>
             )}

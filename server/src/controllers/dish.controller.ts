@@ -212,4 +212,89 @@ const getDishInventory = asyncHandler(async (req, res) => {
   }
 });
 
-export { getDishes, getAddons, getDishInventory, getAddonsByStoreId };
+//delete dish
+const deleteDish = asyncHandler(async (req, res) => {
+  try {
+    const dishId = req.params.id;
+    if (!dishId) {
+      throw new ApiError(400, "Dish ID must be provided");
+    }
+
+    // Validate dish existence
+    const dish = await prisma.dish.findUnique({
+      where: { id: dishId },
+    });
+    if (!dish) {
+      throw new ApiError(404, "Dish not found");
+    }
+
+    const deletedAt = new Date();
+
+    // Soft delete the Dish
+    await prisma.dish.update({
+      where: { id: dishId },
+      data: { deletedAt },
+    });
+
+    // Soft delete related Addons
+    await prisma.addon.updateMany({
+      where: { dishId },
+      data: { deletedAt },
+    });
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          null,
+          "Dish and related addons deleted successfully",
+        ),
+      );
+  } catch (error: any) {
+    console.error(error);
+    throw new ApiError(500, "Internal Server Error", error);
+  }
+});
+
+//delete addon
+const deleteAddon = asyncHandler(async (req, res) => {
+  try {
+    const addonId = req.params.id;
+    if (!addonId) {
+      throw new ApiError(400, "Addon ID must be provided");
+    }
+
+    // Validate addon existence
+    const addon = await prisma.addon.findUnique({
+      where: { id: addonId },
+    });
+    if (!addon) {
+      throw new ApiError(404, "Addon not found");
+    }
+
+    const deletedAt = new Date();
+
+    // Soft delete the Addon
+    await prisma.addon.update({
+      where: { id: addonId },
+      data: { deletedAt },
+    });
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, null, "Addon deleted successfully"));
+  } catch (error: any) {
+    console.error(error);
+    throw new ApiError(500, "Internal Server Error", error);
+  }
+});
+
+export {
+  getDishes,
+  getAddons,
+  getDishInventory,
+  getAddonsByStoreId,
+  deleteDish,
+  deleteAddon,
+};

@@ -18,7 +18,7 @@ export default function Stores() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const organizationId = "1b21d972-2cdb-4b19-900a-65a361017d98";
+  const organizationId = "b6eda0e5-579c-4f28-b4f3-c5cfb864c653";
 
   const router = useRouter();
 

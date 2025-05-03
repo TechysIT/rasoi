@@ -7,39 +7,53 @@ import { motion } from "framer-motion";
 import type { AppProps } from "next/app";
 import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
+import { useEmployeeStore } from "@/stores/store";
 
 export default function App({ Component, pageProps }: AppProps) {
   const [isOnline, setIsOnline] = useState(true);
   const [internetStatusShown, setInternetStatusShown] = useState(false);
 
   useEffect(() => {
-    // Check if there's an internet connection initially
-    if (!navigator.onLine) {
-      setIsOnline(false);
-      setInternetStatusShown(true);
-    }
-
-    // Handler for online event
-    const handleOnline = () => {
-      setIsOnline(true);
-      setTimeout(() => setInternetStatusShown(false), 2000);
+    const fetchEmployeeFromCookie = async () => {
+      try {
+        const employee = await window.ipc.invoke("getEmployeeData");
+        if (employee?.success && employee.data) {
+          useEmployeeStore.getState().setEmployee(employee.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch employee from cookie:", error);
+      }
     };
 
-    // Handler for offline event
-    const handleOffline = () => {
-      setIsOnline(false);
-      setInternetStatusShown(true);
-    };
+    fetchEmployeeFromCookie();
 
-    // Adding event listeners
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
+    // // Check if there's an internet connection initially
+    // if (!navigator.onLine) {
+    //   setIsOnline(false);
+    //   setInternetStatusShown(true);
+    // }
 
-    // Cleanup event listeners on component unmount
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
+    // // Handler for online event
+    // const handleOnline = () => {
+    //   setIsOnline(true);
+    //   setTimeout(() => setInternetStatusShown(false), 2000);
+    // };
+
+    // // Handler for offline event
+    // const handleOffline = () => {
+    //   setIsOnline(false);
+    //   setInternetStatusShown(true);
+    // };
+
+    // // Adding event listeners
+    // window.addEventListener("online", handleOnline);
+    // window.addEventListener("offline", handleOffline);
+
+    // // Cleanup event listeners on component unmount
+    // return () => {
+    //   window.removeEventListener("online", handleOnline);
+    //   window.removeEventListener("offline", handleOffline);
+    // };
   }, []);
 
   return (

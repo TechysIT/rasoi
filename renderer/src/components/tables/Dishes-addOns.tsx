@@ -51,107 +51,117 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/dialog";
+  DialogFooter,
+} from "../ui/dialog-cn";
 import { Label } from "../ui/label";
-import { Switch } from "@heroui/switch";
-import { cn } from "@/utils/cn";
+// import { Switch } from "@heroui/switch";
+// import { cn } from "@/utils/cn";
 import { timeConverter } from "@/utils/timeConverter";
+import { toast } from "sonner";
+import NotFound from "../error/NotFound";
 
-export const columns: ColumnDef<AddOnsTypes>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected()
-            ? true
-            : table.getIsSomePageRowsSelected()
-            ? "indeterminate"
-            : false
-        }
-        onCheckedChange={(value: boolean) =>
-          table.toggleAllPageRowsSelected(!!value)
-        }
-        aria-label="Select all"
-        className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500 data-[state=checked]:text-white"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value: boolean) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-        className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500 data-[state=checked]:text-white"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "name",
-    header: "Add-On Name",
-    cell: ({ row }) => (
-      <div className="font-medium">{row.getValue("name")}</div>
-    ),
-  },
-  {
-    accessorKey: "price",
-    header: "Price (£)",
-    cell: ({ row }) => <div>£{row.getValue("price")}</div>,
-  },
-  {
-    accessorKey: "dishName",
-    header: "Dish",
-    cell: ({ row }) => <div>{row.getValue("dishName")}</div>,
-  },
-  {
-    accessorKey: "createdAt",
-    header: "Created At",
-    cell: ({ row }) => <div>{timeConverter(row.getValue("createdAt"))}</div>,
-  },
-  {
-    accessorKey: "updatedAt",
-    header: "Updated At",
-    cell: ({ row }) => <div>{timeConverter(row.getValue("updatedAt"))}</div>,
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      return (
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="h-5 w-5 p-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
-            >
-              <Menu className="h-4 w-4 text-customPrimary-500" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="bg-white px-3 py-3 rounded-lg text-customPrimary-500 max-w-44"
-          >
-            <DropdownMenuItem className="capitalize hover:text-customPrimary-500 hover:bg-customPrimary-50">
-              View
-            </DropdownMenuItem>
-            <DropdownMenuItem className="capitalize hover:text-customPrimary-500 hover:bg-customPrimary-50">
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem className="capitalize hover:text-customPrimary-500 hover:bg-customPrimary-50">
-              Delete
-            </DropdownMenuItem>
-            <DropdownMenuItem className="capitalize hover:text-customPrimary-500 hover:bg-customPrimary-50">
-              Clone
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
+export function DishesAddonsTable({
+  data,
+  refreshPage,
+}: {
+  data: AddOnsTypes[];
+  refreshPage: () => void;
+}) {
+  const columns: ColumnDef<AddOnsTypes>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected()
+              ? true
+              : table.getIsSomePageRowsSelected()
+              ? "indeterminate"
+              : false
+          }
+          onCheckedChange={(value: boolean) =>
+            table.toggleAllPageRowsSelected(!!value)
+          }
+          aria-label="Select all"
+          className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500 data-[state=checked]:text-white"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value: boolean) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+          className="border-customPrimary-500 data-[state=checked]:bg-customPrimary-500 data-[state=checked]:text-white"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
     },
-  },
-];
-
-export function DishesAddonsTable({ data }: { data: AddOnsTypes[] }) {
+    {
+      accessorKey: "name",
+      header: "Add-On Name",
+      cell: ({ row }) => (
+        <div className="font-medium">{row.getValue("name")}</div>
+      ),
+    },
+    {
+      accessorKey: "price",
+      header: "Price (£)",
+      cell: ({ row }) => <div>£{row.getValue("price")}</div>,
+    },
+    {
+      accessorKey: "dishName",
+      header: "Dish",
+      cell: ({ row }) => <div>{row.getValue("dishName")}</div>,
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Created At",
+      cell: ({ row }) => <div>{timeConverter(row.getValue("createdAt"))}</div>,
+    },
+    {
+      accessorKey: "updatedAt",
+      header: "Updated At",
+      cell: ({ row }) => <div>{timeConverter(row.getValue("updatedAt"))}</div>,
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        return (
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="h-5 w-5 p-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              >
+                <Menu className="h-4 w-4 text-customPrimary-500" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-white px-3 py-3 rounded-lg text-customPrimary-500 max-w-44"
+            >
+              <DropdownMenuItem className="capitalize hover:text-customPrimary-500 hover:bg-customPrimary-50">
+                View
+              </DropdownMenuItem>
+              <DropdownMenuItem className="capitalize hover:text-customPrimary-500 hover:bg-customPrimary-50">
+                Edit
+              </DropdownMenuItem>
+              <DeleteWithConfirmation
+                id={row.original.id}
+                onDelete={refreshPage}
+                name={row.original.name}
+              />
+              <DropdownMenuItem className="capitalize hover:text-customPrimary-500 hover:bg-customPrimary-50">
+                Clone
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -305,7 +315,7 @@ export function DishesAddonsTable({ data }: { data: AddOnsTypes[] }) {
                   colSpan={columns.length}
                   className="h-24 text-center hover:bg-white"
                 >
-                  No results.
+                  <NotFound />
                 </TableCell>
               </TableRow>
             )}
@@ -452,6 +462,64 @@ const AddDishAddons = () => {
             Add AddOn
           </HeroButton>
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const DeleteWithConfirmation = ({
+  id,
+  name,
+  onDelete,
+}: {
+  id: string;
+  name?: string;
+  onDelete: () => void;
+}) => {
+  const [open, setOpen] = useState(false);
+
+  console.log("DeleteWithConfirmation id:", id);
+
+  const handleDelete = async () => {
+    try {
+      await window.ipc.invoke("deleteAddons", id);
+      toast.success(`Add-ons ${name} deleted successfully.`, {
+        duration: 3000,
+      });
+      setOpen(false);
+      onDelete();
+    } catch (error) {
+      toast.error("Error deleting Add-ons. Please try again.", {
+        duration: 3000,
+      });
+      console.error("Error deleting Addons:", error);
+    } finally {
+      setOpen(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger className="hover:text-customPrimary-500 hover:bg-customPrimary-50 focus:bg-customPrimary-50 focus:text-customPrimary-500 text-sm w-full py-1.5 rounded-sm text-start px-2">
+        Delete
+      </DialogTrigger>
+
+      <DialogContent className="sm:max-w-[400px]">
+        <DialogHeader>
+          <DialogTitle>Are you sure?</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          This action cannot be undone. Are you sure you want to delete this
+          item?
+        </p>
+        <DialogFooter className="mt-4">
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={handleDelete}>
+            Confirm Delete
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

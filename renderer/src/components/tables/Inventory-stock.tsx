@@ -56,6 +56,7 @@ import {
 import { Label } from "../ui/label";
 import { customTransition, customVariants } from "@/lib/constant";
 import { timeConverter } from "@/utils/timeConverter";
+import NotFound from "../error/NotFound";
 
 // coloum sturture
 export const columns: ColumnDef<InventoryStockData>[] = [
@@ -312,7 +313,7 @@ export function InventoryStockTable({ data }: { data: InventoryStockData[] }) {
                   colSpan={columns.length}
                   className="h-24 text-center hover:bg-white"
                 >
-                  No results.
+                  <NotFound />
                 </TableCell>
               </TableRow>
             )}

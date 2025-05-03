@@ -1,4 +1,3 @@
-"use client";
 import { useState } from "react";
 import { Users, Calendar as LucidCalenderIcon, User } from "lucide-react";
 import {
@@ -15,8 +14,8 @@ import { EditTableInfo } from "./Tablemerge-dialog";
 interface TableComponentProps {
   table: Table;
   onEdit: (updatedTable: Table) => void;
-  onUpdateStatus: (id: number, status: Table["status"]) => void;
-  onDelete: () => void;
+  onUpdateStatus: (id: string, status: Table["status"]) => void;
+  onDelete: (tableId: string) => void;
   merge: boolean;
   onUnmerge: (mergedTable: Table) => void;
 }
@@ -32,49 +31,64 @@ export default function TableComponent({
   const [updatedTable, setUpdatedTable] = useState<Table>(table);
 
   const statusColors = {
-    available: "bg-green-100 text-green-700 border-green-500",
-    occupied: "bg-red-100 text-red-700 border-red-500",
-    reserved: "bg-yellow-100 text-yellow-700 border-yellow-500",
+    AVAILABLE: "bg-green-100 text-green-700 border-green-500",
+    OCCUPIED: "bg-red-100 text-red-700 border-red-500",
+    RESERVED: "bg-yellow-100 text-yellow-700 border-yellow-500",
+    MERGED: "bg-gray-100 text-gray-700 border-gray-500",
   };
 
-  // Handle saving and updating the table state
   const handleSave = (updatedTable: Table) => {
     setUpdatedTable(updatedTable);
-    onEdit(updatedTable); // ✅ Corrected to pass the full table object
+    onEdit(updatedTable);
   };
 
   // Handle status change
-  const handleStatusChange = (status: Table["status"]) => {
+  const handleStatusChange = async (status: Table["status"]) => {
     setUpdatedTable((prev) => ({ ...prev, status }));
-    onUpdateStatus(table.id, status);
+    try {
+      // Make the API call to update the table status in the database
+      await onUpdateStatus(updatedTable.id, status); // Pass the string id and status
+    } catch (error) {
+      console.error("Failed to update table status:", error);
+    }
   };
 
-  // name
-  const tableName = updatedTable.merged
-    ? `${updatedTable.mergedFrom?.map((id) => `Table ${id}`).join(" & ")}`
-    : `Table ${updatedTable.id}`;
+  // const tableName =
+  //   updatedTable.merged && updatedTable.mergedFrom?.length
+  //     ? updatedTable.mergedFrom.map((id) => `Table ${id}`).join(" & ")
+  //     : `Table ${updatedTable.id}`;
+
+  const handleDelete = async () => {
+    try {
+      // Perform the DB delete action
+      await onDelete(updatedTable.id); // Pass the string id for delete
+      console.log("Table deleted successfully!");
+    } catch (error) {
+      console.error("Failed to delete the table", error);
+    }
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-transform transform hover:scale-105 hover:shadow-xl border border-customPrimary-100 flex flex-col h-full">
       <div className="p-5 relative flex-grow">
         <div className="flex justify-between items-center mb-3">
-          <h2 className="text-lg font-semibold text-gray-900">{tableName}</h2>
+          {/* <h2 className="text-lg font-semibold text-gray-900">{tableName}</h2> */}
           <span
             className={`px-3 py-1 rounded-full text-xs font-medium border ${
               statusColors[updatedTable.status]
             }`}
           >
             {updatedTable.status.charAt(0).toUpperCase() +
-              updatedTable.status.slice(1)}
+              updatedTable.status.slice(1).toLowerCase()}
           </span>
         </div>
+
         <div className="flex items-center text-gray-600 space-x-2 mb-2">
           <Users className="w-5 h-5 text-gray-500" />
           <span className="text-sm">{updatedTable.chairs} chairs</span>
         </div>
 
-        {/* Show customer name if occupied */}
-        {updatedTable.status === "occupied" && updatedTable.customerName && (
+        {updatedTable.status === "OCCUPIED" && updatedTable.customerName && (
           <div className="flex items-center text-gray-600 space-x-2 mb-2">
             <User className="w-5 h-5 text-gray-500" />
             <span className="text-sm font-medium">
@@ -83,8 +97,7 @@ export default function TableComponent({
           </div>
         )}
 
-        {/* Show reservation details if reserved */}
-        {updatedTable.status === "reserved" && updatedTable.reservationName && (
+        {updatedTable.status === "RESERVED" && updatedTable.reservationName && (
           <div className="flex flex-col text-gray-600 mb-2">
             <div className="flex items-center space-x-2">
               <User className="w-5 h-5 text-gray-500" />
@@ -104,20 +117,18 @@ export default function TableComponent({
         )}
       </div>
 
-      {/* Footer */}
       <div className="bg-customPrimary-50/50 border-t border-customPrimary-100 px-5 py-3 flex justify-between items-center w-full">
         <Select value={updatedTable.status} onValueChange={handleStatusChange}>
           <SelectTrigger className="w-[120px] border-customPrimary-200">
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="available">Available</SelectItem>
-            <SelectItem value="occupied">Occupied</SelectItem>
-            <SelectItem value="reserved">Reserved</SelectItem>
+            <SelectItem value="AVAILABLE">Available</SelectItem>
+            <SelectItem value="OCCUPIED">Occupied</SelectItem>
+            <SelectItem value="RESERVED">Reserved</SelectItem>
           </SelectContent>
         </Select>
 
-        {/* Unmerge Button */}
         {merge && (
           <Button
             className="bg-red-500 text-white border border-customPrimary-500 hover:bg-transparent hover:text-red-600 rounded-full text-xs"
@@ -127,11 +138,10 @@ export default function TableComponent({
           </Button>
         )}
 
-        {/* Edit/Delete Actions */}
         <EditTableInfo
           table={updatedTable}
           onSave={handleSave}
-          onDelete={onDelete}
+          onDelete={handleDelete} // Pass the handleDelete to the EditTableInfo component
         />
       </div>
     </div>

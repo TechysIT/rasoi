@@ -8,6 +8,7 @@ const dbPath = path.join(app.getPath("userData"), "local.db");
 // console.log(dbPath);
 
 // Check if the database exists and delete it
+
 // if (fs.existsSync(dbPath)) {
 //   fs.unlinkSync(dbPath);
 //   console.log("Deleted the existing database file.");
@@ -119,15 +120,43 @@ const schema = `
 
   CREATE TABLE IF NOT EXISTS orders (
     id TEXT PRIMARY KEY,
-    storeId TEXT,
+    storeId TEXT NOT NULL,
     customerId TEXT,
-    status TEXT,
-    totalPrice REAL,
-    createdAt TEXT,
-    updatedAt TEXT,
+    orderType TEXT,
+    status TEXT NOT NULL,
+    deliveryStatus TEXT NOT NULL,
+    amount REAL NOT NULL,
+    paymentStatus TEXT NOT NULL,
+    peakAt TEXT,
+    notes TEXT,
+    assignedStaff TEXT,
+    createdBy TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedOn TEXT NOT NULL,
     deletedAt TEXT,
     FOREIGN KEY (storeId) REFERENCES stores(id),
-    FOREIGN KEY (customerId) REFERENCES customers(id)
+    FOREIGN KEY (customerId) REFERENCES customers(id),
+    FOREIGN KEY (createdBy) REFERENCES employees(id) 
+  );
+
+  CREATE TABLE IF NOT EXISTS order_items (
+    id TEXT PRIMARY KEY NOT NULL,
+    orderId TEXT NOT NULL,
+    dishId TEXT NOT NULL,
+    quantity INTEGER DEFAULT 1,
+    price REAL NOT NULL,
+    FOREIGN KEY (orderId) REFERENCES orders(id),
+    FOREIGN KEY (dishId) REFERENCES Dish(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS order_item_addons (
+    id TEXT PRIMARY KEY NOT NULL,
+    orderItemId TEXT NOT NULL,
+    addonId TEXT NOT NULL,
+    addonName TEXT NOT NULL,
+    addonPrice REAL NOT NULL,
+    FOREIGN KEY (orderItemId) REFERENCES order_items(id),
+    FOREIGN KEY (addonId) REFERENCES addons(id)
   );
 
   CREATE TABLE IF NOT EXISTS order_logs (
@@ -220,23 +249,36 @@ const schema = `
     FOREIGN KEY (storeId) REFERENCES stores(id)
   );
 
-  CREATE TABLE IF NOT EXISTS table_list (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    chairs INTEGER NOT NULL,
-    status TEXT NOT NULL,
-    reservationName TEXT,
-    reservationPhone TEXT,
-    reservationEmail TEXT,
-    reservationDescription TEXT,
-    reservationTime TEXT,
-    mergedFrom TEXT,
-    merged BOOLEAN DEFAULT 0,
-    deletedAt TEXT,
-    storeId TEXT,
+  CREATE TABLE IF NOT EXISTS employee_cash_flows (
+    id TEXT PRIMARY KEY,
+    employeeId TEXT NOT NULL,
+    type TEXT NOT NULL, -- 'CASH_IN' or 'CASH_OUT'
+    amount REAL NOT NULL,
+    reason TEXT NOT NULL,
+    pdfUrl TEXT, -- local file path or url
+    createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+    storeId TEXT NOT NULL,
+    FOREIGN KEY (employeeId) REFERENCES employees(id),
     FOREIGN KEY (storeId) REFERENCES stores(id)
   );
 
+  CREATE TABLE IF NOT EXISTS tables (
+    id TEXT PRIMARY KEY,
+    storeId TEXT NOT NULL,
+    name TEXT NOT NULL,
+    chairs INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'AVAILABLE', -- AVAILABLE, OCCUPIED, RESERVED, MERGED
+    customerName TEXT,
+    reservationName TEXT,
+    reservationTime TEXT,
+    mergedIntoId TEXT, -- references another table's id if merged
+    deletedAt TEXT,
+    createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (storeId) REFERENCES stores(id),
+    FOREIGN KEY (mergedIntoId) REFERENCES tables(id)
+  );
 `;
 
 db.exec(schema);

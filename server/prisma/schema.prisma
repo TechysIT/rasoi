@@ -24,6 +24,24 @@ enum CustomerStatus {
   INACTIVE
   BLOCKED
 }
+enum CashFlowType {
+  CASH_IN
+  CASH_OUT
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  MERGED
+}
+enum DeliveryStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 
 model Organization {
   id                String    @id @default(uuid())
@@ -74,9 +92,9 @@ model Store {
 
   Addon Addon[]
 
+  Table Table[]
 
-
-  TableList TableList[]
+  EmployeeCashFlow EmployeeCashFlow[]
 }
 
 model DeviceSetting {
@@ -160,6 +178,10 @@ model Employee {
   Inventory Inventory[]
 
   Dish Dish[]
+
+  EmployeeCashFlow EmployeeCashFlow[]
+
+  Order Order[]
 }
 
 model Customer {
@@ -177,19 +199,59 @@ model Customer {
 }
 
 model Order {
-  id         String    @id @default(uuid())
-  store      Store     @relation(fields: [storeId], references: [id])
-  storeId    String
-  customer   Customer  @relation(fields: [customerId], references: [id])
-  customerId String
-  status     String
-  totalPrice Float
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  deletedAt  DateTime?
+  id              String       @id @default(uuid())
+  store           Store        @relation(fields: [storeId], references: [id])
+  storeId         String
+  customer        Customer?    @relation(fields: [customerId], references: [id])
+  customerId      String?
+  orderType       OrderType
+  status          OrderStatus
+  deliveryStatus  DeliveryStatus
+  amount          Float
+  paymentStatus   String
+  peakAt          DateTime?
+  feedbackScore   Float?
+  notes           String?
+  assignedStaff   String?
 
-  OrderLog OrderLog[]
+  createdBy       String
+  createdByEmployee Employee    @relation(fields: [createdBy], references: [id])
+
+  updatedOn       DateTime      @default(now()) @updatedAt
+  createdAt       DateTime      @default(now())
+  deletedAt       DateTime?
+
+  OrderItems      OrderItem[]
+  OrderLog        OrderLog[]
+
+  @@index([storeId])
+  @@index([customerId])
 }
+
+
+model OrderItem {
+  id        String     @id @default(uuid())
+  order     Order      @relation(fields: [orderId], references: [id])
+  orderId   String
+  dish      Dish       @relation(fields: [dishId], references: [id])
+  dishId    String
+  quantity  Int
+  price     Float
+
+  OrderItemAddons OrderItemAddon[]
+}
+
+
+model OrderItemAddon {
+  id           String    @id @default(uuid())
+  orderItem    OrderItem @relation(fields: [orderItemId], references: [id])
+  orderItemId  String
+  addon        Addon     @relation(fields: [addonId], references: [id])
+  addonId      String
+  addonName    String
+  addonPrice   Float
+}
+
 
 model OrderLog {
   id        String    @id @default(uuid())
@@ -223,6 +285,8 @@ model Dish {
   Addon        Addon[]
 
 
+
+  OrderItem OrderItem[]
 }
 
 model DishInventory {
@@ -248,6 +312,8 @@ model Addon {
 
   dish      Dish?    @relation(fields: [dishId], references: [id])
   store     Store?   @relation(fields: [storeId], references: [id])
+
+  OrderItemAddon OrderItemAddon[]
 }
 
 
@@ -292,15 +358,34 @@ model Report {
   deletedAt  DateTime?
 }
 
+model EmployeeCashFlow {
+  id          String    @id @default(uuid())
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  employeeId  String
+  store            Store         @relation(fields: [storeId], references: [id])
+  storeId          String
+  type        CashFlowType
+  amount      Float
+  reason      String
+  pdfUrl      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
 
-model TableList {
-  id        Int      @id @default(autoincrement()) 
-  name      String
-  chairs    Int
-  status    String  
-  storeId   String
-  store     Store    @relation(fields: [storeId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Table {
+  id               String        @id @default(uuid())
+  store            Store         @relation(fields: [storeId], references: [id])
+  storeId          String
+  name             String
+  chairs           Int
+  status           TableStatus   @default(AVAILABLE)
+  customerName     String?
+  reservationName  String?
+  reservationTime  DateTime?
+  mergedInto       Table?        @relation("MergedInto", fields: [mergedIntoId], references: [id])
+  mergedIntoId     String?
+  mergedTables     Table[]       @relation("MergedInto")
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 }
 

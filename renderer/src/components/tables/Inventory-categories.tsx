@@ -55,13 +55,14 @@ import {
 import { Label } from "../ui/label";
 import { toast } from "sonner";
 import { Switch } from "../ui/switch";
+import NotFound from "../error/NotFound";
 
 export function InventoryCategoryTable({
   data,
-  refreshCategories,
+  refreshPage,
 }: {
   data: InventoryCategoryData[];
-  refreshCategories: () => void;
+  refreshPage: () => void;
 }) {
   // coloum sturture
   const columns: ColumnDef<InventoryCategoryData>[] = [
@@ -172,7 +173,7 @@ export function InventoryCategoryTable({
 
               <DeleteWithConfirmation
                 id={row.original.id}
-                onDelete={refreshCategories}
+                onDelete={refreshPage}
                 name={row.original.name}
               />
 
@@ -328,7 +329,7 @@ export function InventoryCategoryTable({
                   colSpan={columns.length}
                   className="h-24 text-center hover:bg-white"
                 >
-                  No results.
+                  <NotFound />
                 </TableCell>
               </TableRow>
             )}
@@ -423,7 +424,7 @@ const DeleteWithConfirmation = ({
 
   const handleDelete = async () => {
     try {
-      await window.ipc.invoke("softDeleteCategory", id);
+      await window.ipc.invoke("deleteCategory", id);
       toast.success(`Category ${name} deleted successfully.`, {
         duration: 3000,
       });

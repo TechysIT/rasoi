@@ -11,7 +11,6 @@ import {
 import { customTransition, customVariants } from "@/lib/constant";
 import { Button as HeroButton } from "@heroui/react";
 import { Input } from "./ui/input";
-
 import { Label } from "./ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { cn } from "@/utils/cn";
@@ -25,11 +24,11 @@ export function MergeTable({
   onMerge,
 }: {
   tables: Table[];
-  onMerge: (tableIds: number[]) => void;
+  onMerge: (tableIds: string[]) => void;
 }) {
-  const [selectedTables, setSelectedTables] = useState<number[]>([]);
+  const [selectedTables, setSelectedTables] = useState<string[]>([]);
 
-  const handleSelect = (id: number) => {
+  const handleSelect = (id: string) => {
     setSelectedTables((prev) =>
       prev.includes(id)
         ? prev.filter((t) => t !== id)
@@ -59,20 +58,22 @@ export function MergeTable({
         </DialogHeader>
 
         <div className="space-y-6 py-5">
-          <div className="grid  grid-cols-4 gap-6">
+          <div className="grid grid-cols-4 gap-6">
             {tables
-              .filter((table) => table.status === "available" && !table.merged)
+              .filter(
+                (table) => table.status === "AVAILABLE" && !table.mergedIntoId
+              )
               .map((table) => (
                 <button
                   key={table.id}
                   onClick={() => handleSelect(table.id)}
-                  disabled={table.merged}
+                  disabled={!!table.mergedIntoId}
                   className={`p-4 border rounded-xl transition-transform transform hover:scale-105 text-lg font-medium ${
                     selectedTables.includes(table.id)
                       ? "bg-customPrimary-500 text-white shadow-lg"
                       : "bg-white text-gray-700 border-gray-300"
                   } ${
-                    table.merged ? "bg-gray-200 cursor-not-allowed" : ""
+                    table.mergedIntoId ? "bg-gray-200 cursor-not-allowed" : ""
                   } hover:border-customPrimary-400`}
                 >
                   <div className="flex flex-col">
@@ -88,7 +89,6 @@ export function MergeTable({
 
         <div className="flex justify-end space-x-4">
           <DialogClose />
-
           <Button
             onClick={handleConfirmMerge}
             disabled={selectedTables.length !== 2}
@@ -113,7 +113,7 @@ export const EditTableInfo = ({
 }: {
   table: Table;
   onSave: (updatedTable: Table) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
 }) => {
   const [formData, setFormData] = useState({
     chairs: table.chairs,
@@ -121,12 +121,22 @@ export const EditTableInfo = ({
     customerName: table.customerName || "",
     reservationName: table.reservationName || "",
     reservationTime: table.reservationTime || "",
-    tableName: `Table ${table.id}`,
+    tableName: table.name || `Table ${table.id}`,
   });
 
   const [isOpen, setIsOpen] = useState(false);
   const [date, setDate] = useState<Date | null>(null);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && table.reservationTime) {
+      const parsedDate = new Date(table.reservationTime);
+      if (!isNaN(parsedDate.getTime())) {
+        setDate(parsedDate);
+      }
+    }
+  }, [isOpen, table.reservationTime]);
+
   useEffect(() => {
     if (isOpen) {
       setIsPopoverOpen(true);
@@ -141,7 +151,13 @@ export const EditTableInfo = ({
   };
 
   const handleSubmit = () => {
-    onSave({ ...table, ...formData });
+    onSave({
+      ...table,
+      ...formData,
+      reservationTime: date
+        ? date.toISOString()
+        : formData.reservationTime || "",
+    });
     setIsOpen(false);
   };
 
@@ -191,12 +207,12 @@ export const EditTableInfo = ({
             onChange={handleChange}
             className="w-full border p-2 rounded-md"
           >
-            <option value="available">Available</option>
-            <option value="occupied">Occupied</option>
-            <option value="reserved">Reserved</option>
+            <option value="AVAILABLE">Available</option>
+            <option value="OCCUPIED">Occupied</option>
+            <option value="RESERVED">Reserved</option>
           </select>
 
-          {formData.status === "occupied" && (
+          {formData.status === "OCCUPIED" && (
             <>
               <Label className="block text-sm font-medium text-gray-700">
                 Customer Name
@@ -211,7 +227,7 @@ export const EditTableInfo = ({
             </>
           )}
 
-          {formData.status === "reserved" && (
+          {formData.status === "RESERVED" && (
             <>
               <Label className="block text-sm font-medium text-gray-700">
                 Reservation Name
@@ -254,6 +270,7 @@ export const EditTableInfo = ({
             </>
           )}
         </div>
+
         <div className="flex justify-between items-center mt-4 space-x-4">
           <HeroButton
             radius="sm"

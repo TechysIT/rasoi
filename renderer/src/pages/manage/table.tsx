@@ -1,73 +1,208 @@
-"use client";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LayoutGrid } from "lucide-react";
 import TableComponent from "@/components/Table-card";
 import { Table } from "@/utils/Types";
-import { tableDataset } from "@/lib/data";
 import { MergeTable } from "@/components/Tablemerge-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useEmployeeStore } from "@/stores/store";
+import NotFound from "@/components/error/NotFound";
 
-export default function Tables() {
-  const [tables, setTables] = useState<Table[]>(tableDataset);
+export default function Tableslist() {
+  const [tables, setTables] = useState<Table[]>([]);
+  const employee = useEmployeeStore((state) => state.employee);
+  const storeId = employee?.storeId || "";
 
-  const handleMergeTables = (tableIds: number[]) => {
-    const selectedTables = tables.filter((table) =>
-      tableIds.includes(table.id)
-    );
+  // console.log("Store ID:", storeId);
+  if (!storeId) {
+    return <NotFound text="Store ID not found" />;
+  }
 
-    if (selectedTables.length !== 2) return;
+  const normalizeStatus = (status: string): Table["status"] => {
+    switch (status.toUpperCase()) {
+      case "AVAILABLE":
+      case "OCCUPIED":
+      case "RESERVED":
+      case "MERGED":
+        return status.toUpperCase() as Table["status"];
+      default:
+        return "AVAILABLE";
+    }
+  };
 
-    const [table1, table2] = selectedTables;
+  useEffect(() => {
+    const loadTables = async () => {
+      const cached = localStorage.getItem("tables");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setTables(parsed);
+            return;
+          }
+        } catch (err) {
+          console.error("Failed to parse cached tables:", err);
+        }
+      }
 
-    if (table1.merged || table2.merged) return;
-
-    if (table1.status !== "available" || table2.status !== "available") return;
-
-    const mergedTable: Table = {
-      id: Math.max(table1.id, table2.id) + 1,
-      name: `${table1.name} & ${table2.name}`,
-      chairs: table1.chairs + table2.chairs,
-      status: "available",
-      mergedFrom: [table1.id, table2.id],
-      merged: true,
+      try {
+        const response = await window.ipc.invoke("getTables", storeId);
+        if (response.success) {
+          const sanitizedTables = response.data.map((table: any) => ({
+            ...table,
+            status: normalizeStatus(table.status),
+          }));
+          setTables(sanitizedTables);
+          localStorage.setItem("tables", JSON.stringify(sanitizedTables));
+        } else {
+          console.warn("Failed to fetch tables:", response.message);
+        }
+      } catch (error) {
+        console.error("IPC error:", error);
+      }
     };
 
-    setTables((prevTables) => [
-      ...prevTables.filter((t) => !tableIds.includes(t.id)),
-      mergedTable,
-    ]);
+    loadTables();
+  }, []);
+
+  const handleMergeTables = async (tableIds: string[]) => {
+    if (tableIds.length !== 2) return;
+
+    const [id1, id2] = tableIds;
+    const parentTable = tables.find((t) => t.id === id1);
+    const childTable = tables.find((t) => t.id === id2);
+
+    if (!parentTable || !childTable) return;
+    if (parentTable.status !== "AVAILABLE" || childTable.status !== "AVAILABLE")
+      return;
+
+    try {
+      // API call to merge tables
+      const response = await fetch(`/api/tables/merge`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          parentId: parentTable.id,
+          childId: childTable.id,
+        }),
+      });
+
+      if (response.ok) {
+        setTables((prevTables) =>
+          prevTables.map((t) =>
+            t.id === childTable.id ? { ...t, mergedIntoId: parentTable.id } : t
+          )
+        );
+        localStorage.setItem("tables", JSON.stringify(tables));
+      } else {
+        console.error("Failed to merge tables");
+      }
+    } catch (error) {
+      console.error("Failed to merge tables:", error);
+    }
   };
 
-  const handleUnmergeTable = (mergedTable: Table) => {
-    if (!mergedTable.mergedFrom) return;
+  const handleUnmergeTable = async (table: Table) => {
+    if (!table.mergedIntoId) return;
 
-    const restoredTables = mergedTable.mergedFrom
-      .map((id) => tableDataset.find((t) => t.id === id))
-      .filter(Boolean) as Table[];
+    try {
+      // API call to unmerge the table
+      const response = await fetch(`/api/tables/unmerge`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tableId: table.id,
+        }),
+      });
 
-    setTables((prevTables) => [
-      ...prevTables.filter((t) => t.id !== mergedTable.id),
-      ...restoredTables,
-    ]);
+      if (response.ok) {
+        setTables((prevTables) =>
+          prevTables.map((t) =>
+            t.id === table.id ? { ...t, mergedIntoId: undefined } : t
+          )
+        );
+        localStorage.setItem("tables", JSON.stringify(tables));
+      } else {
+        console.error("Failed to unmerge table");
+      }
+    } catch (error) {
+      console.error("Failed to unmerge table:", error);
+    }
   };
 
-  const handleDeleteTable = (id: number) => {
-    setTables((prevTables) => prevTables.filter((t) => t.id !== id));
+  const handleDeleteTable = async (id: string) => {
+    try {
+      // API call to delete the table
+      const response = await fetch(`/api/tables/${id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setTables((prevTables) => prevTables.filter((t) => t.id !== id));
+        localStorage.setItem("tables", JSON.stringify(tables));
+      } else {
+        console.error("Failed to delete table");
+      }
+    } catch (error) {
+      console.error("Failed to delete table:", error);
+    }
   };
 
-  const handleEditTable = (updatedTable: Table) => {
-    setTables((prevTables) =>
-      prevTables.map((t) => (t.id === updatedTable.id ? updatedTable : t))
-    );
+  const handleEditTable = async (updatedTable: Table) => {
+    try {
+      // API call to update table info
+      const response = await fetch(`/api/tables/${updatedTable.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(updatedTable),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const updatedTables = await response.json();
+        setTables(updatedTables);
+        localStorage.setItem("tables", JSON.stringify(updatedTables));
+      } else {
+        console.error("Failed to update table");
+      }
+    } catch (error) {
+      console.error("Failed to update table:", error);
+    }
   };
 
-  const handleUpdateStatus = (id: number, newStatus: string) => {
-    setTables((prevTables: any) =>
-      prevTables.map((table: any) =>
-        table.id === id ? { ...table, status: newStatus } : table
-      )
-    );
+  const handleUpdateStatus = async (tableId: string, newStatus: string) => {
+    try {
+      // API call to update the table status in the database
+      const response = await fetch(`/api/tables/${tableId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: newStatus }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const updatedTable = await response.json();
+
+        // Ensure that newStatus is a valid value (using TypeScript's union type).
+        setTables((prevTables) =>
+          prevTables.map((table) =>
+            table.id === updatedTable.id
+              ? { ...table, status: updatedTable.status } // Use the actual updated status from response
+              : table
+          )
+        );
+
+        localStorage.setItem("tables", JSON.stringify(tables));
+      } else {
+        console.error("Failed to update table status");
+      }
+    } catch (error) {
+      console.error("Failed to update table status:", error);
+    }
   };
 
   return (
@@ -76,12 +211,13 @@ export default function Tables() {
         <LayoutGrid className="mr-2" />
         Table List
       </h1>
+
       <div className="flex justify-end">
         <MergeTable tables={tables} onMerge={handleMergeTables} />
       </div>
 
       <ScrollArea className="h-[70vh]">
-        <div className="grid grid-cols-4  gap-6  p-5">
+        <div className="grid grid-cols-4 gap-6 p-5">
           {tables.map((table) => (
             <TableComponent
               key={table.id}
@@ -89,7 +225,7 @@ export default function Tables() {
               onEdit={handleEditTable}
               onUpdateStatus={handleUpdateStatus}
               onDelete={() => handleDeleteTable(table.id)}
-              merge={table.merged ?? false}
+              merge={!!table.mergedIntoId}
               onUnmerge={handleUnmergeTable}
             />
           ))}

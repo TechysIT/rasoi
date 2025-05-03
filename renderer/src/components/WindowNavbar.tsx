@@ -47,7 +47,9 @@ export default function WindowNavbar() {
           height={16}
           width={16}
         />
-        <p className="font-medium">Techy&apos;s POS System</p>
+        <p className="font-semibold text-xs tracking-wider uppercase drop-shadow-[2px_2px_1px_rgba(0,0,0,0.2)]">
+          Techy&apos;s{" "}
+        </p>
       </div>
       <div className="w-fit h-full flex flex-row gap-2 px-2">
         <div>

@@ -1,17 +1,4 @@
-"use client";
-import {
-  Album,
-  Bell,
-  CircleUserRound,
-  Clock,
-  Disc2,
-  LogOut,
-  Mails,
-  Search,
-  Store,
-  Users,
-  Wallet,
-} from "lucide-react";
+import { CircleUserRound, LogOut, Store, Users, Wallet } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { BiCloudUpload } from "react-icons/bi";
 import { Avatar, Button, Radio, RadioGroup } from "@heroui/react";
@@ -34,8 +21,22 @@ import { Textarea } from "./ui/textarea";
 import { FileUploader } from "react-drag-drop-files";
 import { FaCircleCheck } from "react-icons/fa6";
 import StartAndEnd from "./Shift-start-end";
+import { useEmployeeStore } from "@/stores/store";
 
 export default function Navbar() {
+  const handleLogout = async () => {
+    try {
+      //  clear  cookie
+      await window.ipc.invoke("logoutEmployee");
+
+      // Clear Zustand
+      useEmployeeStore.getState().clearEmployee();
+
+      window.location.reload();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
   return (
     <div className="flex h-20 items-center justify-between px-6 bg-white">
       <h2 className="text-xl font-bold text-customPrimary-500 ">
@@ -113,11 +114,12 @@ export default function Navbar() {
                     <span>Switch Store</span>
                   </PopUpAnimation>
                 </Link>
-
-                <PopUpAnimation className="flex justify-start items-center space-x-2 hover:bg-customPrimary-50 rounded-2xl py-1.5 px-3 text-red-500 text-sm">
-                  <LogOut size={18} />
-                  <span>Log out</span>
-                </PopUpAnimation>
+                <button className="w-full" onClick={handleLogout}>
+                  <PopUpAnimation className="flex justify-start items-center space-x-2 hover:bg-customPrimary-50 rounded-2xl py-1.5 px-3 text-red-500 text-sm cursor-pointer">
+                    <LogOut size={18} />
+                    <span>Log out</span>
+                  </PopUpAnimation>
+                </button>
               </ul>
             </div>
           </PopoverContent>

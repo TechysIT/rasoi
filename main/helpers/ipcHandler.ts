@@ -2,6 +2,16 @@ import { ipcMain } from "electron";
 import db from "./database";
 import axios from "axios";
 import dns from "dns";
+import {
+  clearEmployeeCookie,
+  getEmployeeCookie,
+  setEmployeeCookie,
+} from "./cookieHandler";
+
+require("dotenv").config();
+
+const apiUrl = process.env.API_URL;
+console.log("API URL:", apiUrl);
 
 export default function ipcHandler() {
   // check online
@@ -12,6 +22,14 @@ export default function ipcHandler() {
       });
     });
   }
+
+  // get cookie
+  ipcMain.handle("getEmployeeData", async () => {
+    const employee = await getEmployeeCookie();
+    return employee
+      ? { success: true, data: employee }
+      : { success: false, message: "No employee cookie found" };
+  });
 
   // fetch store
   ipcMain.handle("getStores", async (_event, organizationId) => {
@@ -32,15 +50,12 @@ export default function ipcHandler() {
 
       console.log("No local stores found, fetching from API...");
 
-      const apiResponse = await axios.get(
-        "http://localhost:8000/api/v1/store/getStore",
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "organization-id": organizationId,
-          },
-        }
-      );
+      const apiResponse = await axios.get(`${apiUrl}/store/getStore`, {
+        headers: {
+          "Content-Type": "application/json",
+          "organization-id": organizationId,
+        },
+      });
 
       const apiStores = apiResponse.data.data;
 
@@ -92,9 +107,7 @@ export default function ipcHandler() {
       if (existingRoles.count === 0) {
         console.log("No roles found locally for storeId, fetching from API...");
 
-        const roleApiResponse = await axios.get(
-          `http://localhost:8000/api/v1/roles/${storeId}`
-        );
+        const roleApiResponse = await axios.get(`${apiUrl}/roles/${storeId}`);
         const roles = roleApiResponse.data.data;
 
         if (Array.isArray(roles) && roles.length > 0) {
@@ -221,9 +234,7 @@ export default function ipcHandler() {
       console.log("No local employees found, fetching from API...");
 
       // Fetch Employees from API based on storeId
-      const apiResponse = await axios.get(
-        `http://localhost:8000/api/v1/employees/${storeId}`
-      );
+      const apiResponse = await axios.get(`${apiUrl}/employees/${storeId}`);
       console.log("API Response:", apiResponse.data);
       const apiEmployees = apiResponse.data.data;
 
@@ -311,24 +322,6 @@ export default function ipcHandler() {
     }
   });
 
-  // employee login
-  ipcMain.handle("employeeLogin", async (_event, { email, pin }) => {
-    try {
-      const response = await axios.post(
-        "http://localhost:8000/api/v1/employee/login",
-        { email, pin }
-      );
-
-      return response.data;
-    } catch (error) {
-      console.error("Employee login failed:", error);
-
-      const errorMessage =
-        error.response?.data?.message || "An error occurred during login.";
-      return { success: false, message: errorMessage };
-    }
-  });
-
   // fetch category
   ipcMain.handle("getCategories", async (_event, storeId) => {
     console.log("Received request to get categories for storeId:", storeId);
@@ -347,14 +340,11 @@ export default function ipcHandler() {
       console.log("No local categories found, fetching from API...");
 
       // Fetch from API
-      const apiResponse = await axios.get(
-        `http://localhost:8000/api/v1/category/get/${storeId}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const apiResponse = await axios.get(`${apiUrl}/category/get/${storeId}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       const apiCategories = apiResponse.data.data;
       console.log("API categories:", apiCategories);
@@ -423,7 +413,7 @@ export default function ipcHandler() {
 
       // Fetch from API
       const apiResponse = await axios.get(
-        `http://localhost:8000/api/v1/inventory/get/${storeId}`,
+        `${apiUrl}/inventory/get/${storeId}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -550,10 +540,9 @@ export default function ipcHandler() {
 
       // Fetch from API if not found locally
       console.log("No local dishes found. Fetching from API...");
-      const response = await axios.get(
-        `http://localhost:8000/api/v1/dish/get/${storeId}`,
-        { headers: { "Content-Type": "application/json" } }
-      );
+      const response = await axios.get(`${apiUrl}/dish/get/${storeId}`, {
+        headers: { "Content-Type": "application/json" },
+      });
       const apiDishes = response.data.data || [];
 
       const insertDish = db.prepare(`
@@ -593,18 +582,14 @@ export default function ipcHandler() {
       console.log(`Inserted ${apiDishes.length} dishes.`);
 
       for (const dish of apiDishes) {
-        const diRes = await axios.get(
-          `http://localhost:8000/api/v1/dishInventory/get/${dish.id}`
-        );
+        const diRes = await axios.get(`${apiUrl}/dishInventory/get/${dish.id}`);
         const inventories = diRes.data.data || [];
 
         console.log(
           `Fetched ${inventories} inventories for dish ID ${dish.id}`
         );
         // Fetch and insert Addons
-        const addonRes = await axios.get(
-          `http://localhost:8000/api/v1/addon/get/${dish.id}`
-        );
+        const addonRes = await axios.get(`${apiUrl}/addon/get/${dish.id}`);
         const addons = addonRes.data.data || [];
 
         console.log(`Fetched ${addons.length} addons for dish ID ${dish.id}`);
@@ -687,9 +672,7 @@ export default function ipcHandler() {
       console.log(
         `No local addons found for storeId ${storeId}. Fetching from API...`
       );
-      const res = await axios.get(
-        `http://localhost:8000/api/v1/addon/getAll/${storeId}`
-      );
+      const res = await axios.get(`${apiUrl}/addon/getAll/${storeId}`);
       const apiAddons = res.data.data || [];
 
       if (apiAddons.length === 0) {
@@ -813,9 +796,7 @@ export default function ipcHandler() {
       if (customers.length === 0) {
         console.log("No local customers found, fetching from API...");
 
-        const response = await axios.get(
-          `http://localhost:8000/api/v1/customer/get/${storeId}`
-        );
+        const response = await axios.get(`${apiUrl}/customer/get/${storeId}`);
         const remoteCustomers = response.data.data;
 
         if (!Array.isArray(remoteCustomers)) {
@@ -941,8 +922,90 @@ export default function ipcHandler() {
     }
   });
 
+  //fetch tables
+  ipcMain.handle("getTables", async (_event, storeId) => {
+    if (!storeId) {
+      console.warn("No storeId provided to getTables");
+      return { success: false, message: "Store ID is required" };
+    }
+
+    try {
+      //try localDB
+      const localTables = db
+        .prepare(`SELECT * FROM tables WHERE storeId = ?`)
+        .all(storeId);
+
+      if (localTables.length > 0) {
+        console.log("Returning tables from local SQLite");
+        return { success: true, data: localTables };
+      }
+
+      // fetch from api
+      const hasInternet = await checkInternet();
+      if (hasInternet) {
+        try {
+          const res = await axios.get(`${apiUrl}/table/get/${storeId}`, {
+            headers: { "Content-Type": "application/json" },
+          });
+
+          console.log("Fetched tables from remote server:", res.data.data);
+          const fetchedTables = res.data?.data || [];
+
+          console.log(`Fetched ${fetchedTables} tables from remote server`);
+
+          const insert = db.prepare(`
+            INSERT OR REPLACE INTO tables (
+              id, storeId, name, chairs, status, customerName, reservationName, reservationTime,
+              mergedIntoId, createdAt, updatedAt, deletedAt
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+
+          const insertMany = db.transaction((tables) => {
+            for (const table of tables) {
+              insert.run(
+                table.id,
+                table.storeId,
+                table.name,
+                table.chairs ?? 0,
+                table.status,
+                table.customerName || null,
+                table.reservationName || null,
+                table.reservationTime || null,
+                table.mergedIntoId || null,
+                table.createdAt,
+                table.updatedAt,
+                table.deletedAt || null
+              );
+            }
+          });
+
+          insertMany(fetchedTables);
+
+          console.log(
+            "Tables fetched from server and saved locally",
+            fetchedTables
+          );
+          return { success: true, data: fetchedTables };
+        } catch (apiError) {
+          console.warn("Failed to fetch from remote:", apiError.message);
+          return { success: false, message: "Failed to fetch from server" };
+        }
+      } else {
+        console.warn("No internet. Returning empty local result.");
+        return { success: true, data: [] };
+      }
+    } catch (error) {
+      console.error("Error in getTables IPC:", error);
+      return {
+        success: false,
+        message: "Internal error fetching tables",
+        error: error.message,
+      };
+    }
+  });
+
   // delete category
-  ipcMain.handle("softDeleteCategory", async (_event, categoryId) => {
+  ipcMain.handle("deleteCategory", async (_event, categoryId) => {
     if (!categoryId) {
       console.warn("No categoryId provided to softDeleteCategory");
       return { success: false, message: "Category ID is required" };
@@ -970,14 +1033,11 @@ export default function ipcHandler() {
 
       if (hasInternet) {
         try {
-          await axios.delete(
-            `http://localhost:8000/api/v1/category/delete/${categoryId}`,
-            {
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }
-          );
+          await axios.patch(`${apiUrl}/category/delete/${categoryId}`, {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
           console.log(" Category delete synced with remote server");
         } catch (apiError) {
           console.warn("Remote delete failed:", apiError.message);
@@ -1041,12 +1101,12 @@ export default function ipcHandler() {
           }.`
         );
 
-        const hasInternet = await checkInternet();
+        const online = await checkInternet();
 
-        if (hasInternet) {
+        if (online) {
           try {
             await axios.patch(
-              `http://localhost:8000/api/v1/category/status/${categoryId}`,
+              `${apiUrl}/category/status/${categoryId}`,
               { status: newStatus },
               {
                 headers: {
@@ -1079,4 +1139,203 @@ export default function ipcHandler() {
       }
     }
   );
+
+  ipcMain.handle("deleteDish", async (_event, dishId) => {
+    try {
+      // Update Dish locally
+      const deletedAt = new Date().toISOString();
+      await db
+        .prepare(`UPDATE Dish SET deletedAt = ? WHERE id = ?`)
+        .run(deletedAt, dishId);
+
+      // Update related Addons locally
+      await db
+        .prepare(`UPDATE addons SET deletedAt = ? WHERE dishId = ?`)
+        .run(deletedAt, dishId);
+
+      console.log(`Locally deleted dish ${dishId} and its addons.`);
+
+      const online = await checkInternet();
+      if (online) {
+        // Sync with remote server
+        await axios.patch(`${apiUrl}/dish/delete/${dishId}`);
+
+        console.log(`Remote dish and addons deleted.`);
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error("Failed to delete:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  //delete addon
+  ipcMain.handle("deleteAddons", async (_event, addonId: string) => {
+    try {
+      const deletedAt = new Date().toISOString();
+
+      // Update Addon locally
+      await db
+        .prepare(`UPDATE addons SET deletedAt = ? WHERE id = ?`)
+        .run(deletedAt, addonId);
+
+      console.log(`Locally deleted addon ${addonId}.`);
+
+      const online = await checkInternet();
+      if (online) {
+        // Sync with remote server
+        await axios.patch(`${apiUrl}/addon/delete//${addonId}`);
+
+        console.log(`Remote addon deleted.`);
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error("Failed to delete addon:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  //fetch orders
+  ipcMain.handle("getOrders", async (_event, storeId) => {
+    console.log("Received request to get orders for storeId:", storeId);
+
+    try {
+      // Fetch from local DB
+      const localOrders = db
+        .prepare("SELECT * FROM orders WHERE storeId = ?")
+        .all(storeId);
+
+      if (localOrders.length > 0) {
+        console.log("Returning local orders:", localOrders);
+        return localOrders;
+      }
+
+      console.log("No local orders found, fetching from API...");
+
+      // Fetch from API
+      const apiResponse = await axios.get(`${apiUrl}/order/get/${storeId}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const apiOrders = apiResponse.data.data;
+      console.log("API orders:", apiOrders);
+
+      if (!Array.isArray(apiOrders)) {
+        console.error("Invalid API response format:", apiOrders);
+        return [];
+      }
+
+      // Prepare insert statements
+      const insertOrder = db.prepare(`
+        INSERT INTO orders (
+          id, storeId, customerId, orderType, status, deliveryStatus,
+          amount, paymentStatus, peakAt, notes, assignedStaff,
+          createdBy, updatedOn, createdAt, deletedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      const insertOrderItem = db.prepare(`
+        INSERT INTO order_items (
+          id, orderId, dishId, quantity, price
+        ) VALUES (?, ?, ?, ?, ?)
+      `);
+
+      const insertOrderItemAddon = db.prepare(`
+        INSERT INTO order_item_addons (
+          id, orderItemId, addonId, addonName, addonPrice
+        ) VALUES (?, ?, ?, ?, ?)
+      `);
+
+      const insertMany = db.transaction((orders) => {
+        for (const order of orders) {
+          insertOrder.run(
+            order.id,
+            order.storeId,
+            order.customerId,
+            order.orderType,
+            order.status,
+            order.deliveryStatus,
+            order.amount,
+            order.paymentStatus,
+            order.peakAt,
+            order.notes,
+            order.assignedStaff,
+            order.createdBy,
+            order.updatedOn,
+            order.createdAt,
+            order.deletedAt
+          );
+
+          for (const item of order.OrderItems || []) {
+            insertOrderItem.run(
+              item.id,
+              item.orderId,
+              item.dishId,
+              item.quantity,
+              item.price
+            );
+
+            for (const addon of item.OrderItemAddons || []) {
+              insertOrderItemAddon.run(
+                addon.id,
+                addon.orderItemId,
+                addon.addonId,
+                addon.addon?.name || addon.addonName || "",
+                addon.addon?.price || addon.addonPrice || 0
+              );
+            }
+          }
+        }
+      });
+
+      insertMany(apiOrders);
+
+      console.log("Orders synced to local DB.");
+      return apiOrders;
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      return [];
+    }
+  });
+
+  // employee login
+  ipcMain.handle("employeeLogin", async (_event, { email, pin }) => {
+    try {
+      const response = await axios.post(`${apiUrl}/employee/login`, {
+        email,
+        pin,
+      });
+
+      const employee = response.data?.data?.employee;
+
+      if (employee) {
+        await setEmployeeCookie(employee);
+        console.log("Employee cookie set successfully");
+      }
+
+      return { success: true, data: employee, message: "Login successful" };
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "An error occurred during login.";
+      return { success: false, message: errorMessage };
+    }
+  });
+
+  // Handle get employee
+  ipcMain.handle("getEmployeeData", async () => {
+    const employee = await getEmployeeCookie();
+    return employee
+      ? { success: true, data: employee }
+      : { success: false, message: "Not logged in" };
+  });
+
+  // Handle logout
+  ipcMain.handle("logoutEmployee", async () => {
+    await clearEmployeeCookie();
+    return { success: true, message: "Employee logged out" };
+  });
 }
