@@ -1338,4 +1338,64 @@ export default function ipcHandler() {
     await clearEmployeeCookie();
     return { success: true, message: "Employee logged out" };
   });
+
+  // sync actions
+
+  // add employee
+  ipcMain.handle("syncEmployees", async (_event, storeId) => {
+    try {
+      const apiResponse = await axios.get(`${apiUrl}/employees/${storeId}`);
+      const apiEmployees = apiResponse.data.data;
+
+      if (!Array.isArray(apiEmployees)) {
+        console.error(
+          "Invalid employees API response during sync:",
+          apiResponse
+        );
+        return false;
+      }
+
+      const insertEmployeeStmt = db.prepare(
+        `INSERT INTO employees (
+            id, storeId, firstName, lastName, email, phone, roleId, createdAt, updatedAt, address, lastLogin
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET 
+            storeId=excluded.storeId, 
+            firstName=excluded.firstName, 
+            lastName=excluded.lastName, 
+            email=excluded.email, 
+            phone=excluded.phone, 
+            roleId=excluded.roleId, 
+            createdAt=excluded.createdAt, 
+            updatedAt=excluded.updatedAt, 
+            address=excluded.address, 
+            lastLogin=excluded.lastLogin`
+      );
+
+      const insertEmployees = db.transaction((employees) => {
+        for (const employee of employees) {
+          insertEmployeeStmt.run(
+            employee.id,
+            employee.storeId,
+            employee.firstName,
+            employee.lastName,
+            employee.email,
+            employee.phone,
+            employee.roleId,
+            employee.createdAt,
+            employee.updatedAt,
+            employee.address,
+            employee.lastLogin
+          );
+        }
+      });
+
+      insertEmployees(apiEmployees);
+      console.log("Synced employees from API to local DB.");
+      return true;
+    } catch (error) {
+      console.error("Failed to sync employees:", error);
+      return false;
+    }
+  });
 }

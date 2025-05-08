@@ -8,13 +8,42 @@ function getCookieUrl(): string {
   return isProd ? "http://localhost" : `http://localhost:${port}`;
 }
 
-export async function setEmployeeCookie(employee: object) {
+export async function setEmployeeCookie(employee: {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  storeId: string;
+  role: {
+    id: string;
+    name: string;
+    userManagement: boolean;
+    orderManagement: boolean;
+    inventoryManagement: boolean;
+    reportManagement: boolean;
+    menuManagement: boolean;
+    settingManagement: boolean;
+    roleManagement: boolean;
+    kitchenManagement: boolean;
+    cashManagement: boolean;
+    customerManagement: boolean;
+    supplierManagement: boolean;
+  };
+}) {
   const cookie = {
     url: getCookieUrl(),
     name: COOKIE_NAME,
-    value: JSON.stringify(employee),
-    expirationDate: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
+    value: JSON.stringify({
+      id: employee.id,
+      firstName: employee.firstName,
+      lastName: employee.lastName,
+      email: employee.email,
+      storeId: employee.storeId,
+      role: employee.role, 
+    }),
+    expirationDate: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 1 day
   };
+
   await session.defaultSession.cookies.set(cookie);
 }
 

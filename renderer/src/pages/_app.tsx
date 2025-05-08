@@ -18,6 +18,7 @@ export default function App({ Component, pageProps }: AppProps) {
       try {
         const employee = await window.ipc.invoke("getEmployeeData");
         if (employee?.success && employee.data) {
+          // console.log("Fetched Employee:", employee.data);
           useEmployeeStore.getState().setEmployee(employee.data);
         }
       } catch (error) {
@@ -28,32 +29,32 @@ export default function App({ Component, pageProps }: AppProps) {
     fetchEmployeeFromCookie();
 
     // // Check if there's an internet connection initially
-    // if (!navigator.onLine) {
-    //   setIsOnline(false);
-    //   setInternetStatusShown(true);
-    // }
+    if (!navigator.onLine) {
+      setIsOnline(false);
+      setInternetStatusShown(true);
+    }
 
-    // // Handler for online event
-    // const handleOnline = () => {
-    //   setIsOnline(true);
-    //   setTimeout(() => setInternetStatusShown(false), 2000);
-    // };
+    // Handler for online event
+    const handleOnline = () => {
+      setIsOnline(true);
+      setTimeout(() => setInternetStatusShown(false), 2000);
+    };
 
-    // // Handler for offline event
-    // const handleOffline = () => {
-    //   setIsOnline(false);
-    //   setInternetStatusShown(true);
-    // };
+    // Handler for offline event
+    const handleOffline = () => {
+      setIsOnline(false);
+      setInternetStatusShown(true);
+    };
 
-    // // Adding event listeners
-    // window.addEventListener("online", handleOnline);
-    // window.addEventListener("offline", handleOffline);
+    // Adding event listeners
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
-    // // Cleanup event listeners on component unmount
-    // return () => {
-    //   window.removeEventListener("online", handleOnline);
-    //   window.removeEventListener("offline", handleOffline);
-    // };
+    // Cleanup event listeners on component unmount
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
   }, []);
 
   return (

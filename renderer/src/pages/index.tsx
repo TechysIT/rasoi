@@ -22,6 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useEmployeeStore } from "@/stores/store";
+import NotFound from "@/components/error/NotFound";
 
 export default function Home() {
   const tabsListRef = useRef<HTMLDivElement>(null);
@@ -32,54 +34,55 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("all");
   const [productData, setProductData] = useState<any[]>([]);
 
-  const storeId = "ef298430-00aa-4a11-96a0-d313378ce8f0";
+  const employee = useEmployeeStore((state) => state.employee);
+  const storeId = employee?.storeId || "";
+
+  const fetchCategory = async () => {
+    try {
+      const result = await window.ipc.invoke("getCategories", storeId);
+      // console.log("Fetched categories from IPC:", result);
+
+      const filteredCategories = Array.isArray(result)
+        ? result.filter((cat) => !cat.deletedAt && cat.status !== 0)
+        : [];
+
+      setCategories(filteredCategories);
+
+      fetchDishes(filteredCategories);
+    } catch (error) {
+      console.error("Error fetching categories from ipc:", error);
+    }
+  };
+  const fetchDishes = async (validCategories) => {
+    try {
+      const result = await window.ipc.invoke("getDishes", storeId);
+
+      // console.log("Fetched dishes from IPC:", result);
+
+      const validCategoryIds = validCategories.map((cat) => cat.id);
+      // console.log("Valid category IDs:", validCategoryIds);
+
+      const filteredDishes = Array.isArray(result)
+        ? result.filter((dish) => {
+            const belongsToValidCategory = validCategoryIds.includes(
+              dish.categoryId
+            );
+            console.log(
+              `Checking dish: ${dish.name}, categoryId: ${dish.categoryId}, valid: ${belongsToValidCategory}`
+            );
+            return !dish.deletedAt && belongsToValidCategory;
+          })
+        : [];
+
+      // console.log("Filtered dishes:", filteredDishes);
+      setProductData(filteredDishes);
+    } catch (error) {
+      console.error("Error fetching dishes from ipc:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchCategory = async () => {
-      try {
-        const result = await window.ipc.invoke("getCategories", storeId);
-        // console.log("Fetched categories from IPC:", result);
-
-        const filteredCategories = Array.isArray(result)
-          ? result.filter((cat) => !cat.deletedAt && cat.status !== 0)
-          : [];
-
-        setCategories(filteredCategories);
-
-        fetchDishes(filteredCategories);
-      } catch (error) {
-        console.error("Error fetching categories from ipc:", error);
-      }
-    };
-    const fetchDishes = async (validCategories) => {
-      try {
-        const result = await window.ipc.invoke("getDishes", storeId);
-
-        // console.log("Fetched dishes from IPC:", result);
-
-        const validCategoryIds = validCategories.map((cat) => cat.id);
-        // console.log("Valid category IDs:", validCategoryIds);
-
-        const filteredDishes = Array.isArray(result)
-          ? result.filter((dish) => {
-              const belongsToValidCategory = validCategoryIds.includes(
-                dish.categoryId
-              );
-              console.log(
-                `Checking dish: ${dish.name}, categoryId: ${dish.categoryId}, valid: ${belongsToValidCategory}`
-              );
-              return !dish.deletedAt && belongsToValidCategory;
-            })
-          : [];
-
-        // console.log("Filtered dishes:", filteredDishes);
-        setProductData(filteredDishes);
-      } catch (error) {
-        console.error("Error fetching dishes from ipc:", error);
-      }
-    };
-
-    fetchCategory();
+    if (storeId) fetchCategory();
   }, [storeId]);
 
   const handleAddToMenu = ({
@@ -133,6 +136,8 @@ export default function Home() {
     });
   };
 
+  // catgeory scrollbar
+
   useEffect(() => {
     const updateScrollability = () => {
       if (tabsListRef.current) {
@@ -184,6 +189,10 @@ export default function Home() {
   const handleRemoveItem = (id: number) => {
     setMenuItems((prevItems) => prevItems.filter((item) => item.id !== id));
   };
+
+  if (!storeId) {
+    return <NotFound text="Store ID not found" />;
+  }
 
   return (
     <ResizablePanelGroup

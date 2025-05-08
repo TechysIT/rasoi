@@ -35,7 +35,7 @@ if (isProd) {
     await mainWindow.loadURL(`http://localhost:${port}/`);
     mainWindow.webContents.openDevTools();
   }
-
+  ipcHandler();
   // Window maximize/restore events
   mainWindow.on("maximize", () => {
     mainWindow.webContents.send("window-status", true);
@@ -45,7 +45,6 @@ if (isProd) {
     mainWindow.webContents.send("window-status", false);
   });
 
-  ipcHandler();
   // Maximize/minimize/close window
   ipcMain.on("window-maximize", () => {
     if (mainWindow.isMaximized()) {

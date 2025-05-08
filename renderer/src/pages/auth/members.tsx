@@ -157,7 +157,7 @@ export default function ProfileSelector() {
                     <Crown className="absolute -top-4 -left-1 h-4 w-4 text-customPrimary-500" />
                   </div>
                   <div className="flex-1 text-left">
-                    <div className="font-medium text-customPrimary-500">
+                    <div className="font-medium text-customPrimary-500 capitalize">
                       {adminProfile.name}
                     </div>
                     <div className="text-sm text-muted-foreground">

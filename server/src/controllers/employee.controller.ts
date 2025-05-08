@@ -136,7 +136,11 @@ const loginEmployee = asyncHandler(async (req, res) => {
     // Find the employee by email
     const employee = await prisma.employee.findFirst({
       where: { email, deletedAt: null },
+      include: {
+        role: true,
+      },
     });
+
     console.log(employee);
     if (!employee) {
       throw new ApiError(404, "Employee not found");
@@ -153,6 +157,7 @@ const loginEmployee = asyncHandler(async (req, res) => {
     // Update lastLoggedIn
     const updatedEmployee = await prisma.employee.update({
       where: { id: employee.id },
+
       data: { lastLogin: new Date() },
     });
 
@@ -177,6 +182,7 @@ const loginEmployee = asyncHandler(async (req, res) => {
             createdAt: employee.createdAt,
             address: employee.address,
             lastLoggedIn: updatedEmployee.lastLogin,
+            role: employee.role,
           },
         },
         "Login successful",

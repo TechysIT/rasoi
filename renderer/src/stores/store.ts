@@ -11,8 +11,27 @@ export const sidebarSizeState = create<sidebarSizeInterface>((set) => ({
   setSidebarWidth: (sidebarWidth: any) => set(() => ({ sidebarWidth })),
 }));
 
+// employeedata from cookie
+interface RolePermissions {
+  userManagement: boolean;
+  orderManagement: boolean;
+  inventoryManagement: boolean;
+  reportManagement: boolean;
+  menuManagement: boolean;
+  settingManagement: boolean;
+  roleManagement: boolean;
+  kitchenManagement: boolean;
+  cashManagement: boolean;
+  customerManagement: boolean;
+  supplierManagement: boolean;
+}
 
-// employeedata from cookie 
+interface Role {
+  id: string;
+  name: string;
+  permissions: RolePermissions;
+}
+
 interface EmployeeData {
   id: string;
   firstName: string;
@@ -21,7 +40,7 @@ interface EmployeeData {
   phone: string;
   avatarPath: string;
   storeId: string;
-  roleId: string;
+  role: Role;
   createdAt: string;
   address: string;
   lastLoggedIn: string;

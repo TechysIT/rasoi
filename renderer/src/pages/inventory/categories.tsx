@@ -13,11 +13,6 @@ export default function ManageCategories() {
   const employee = useEmployeeStore((state) => state.employee);
   const storeId = employee?.storeId || "";
 
-  // console.log("Store ID:", storeId);
-  if (!storeId) {
-    return <NotFound text="Store ID not found" />;
-  }
-
   const fetchCategories = async () => {
     setLoading(true);
     try {
@@ -38,8 +33,12 @@ export default function ManageCategories() {
   };
 
   useEffect(() => {
-    fetchCategories();
+    if (storeId) fetchCategories();
   }, [storeId]);
+
+  if (!storeId) {
+    return <NotFound text="Store ID not found" />;
+  }
 
   return (
     <div className="container overflow-auto pb-20">
